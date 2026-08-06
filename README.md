@@ -1,5 +1,7 @@
 # SkillSwap
 
+SkillSwap: Peer-to-Peer Skill Exchange Platform.
+
 SkillSwap is a peer-to-peer skill exchange platform built with the MERN stack.
 
 ## Current Starter
