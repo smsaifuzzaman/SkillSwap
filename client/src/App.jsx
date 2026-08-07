@@ -11,12 +11,17 @@ import LoginPage from "./pages/LoginPage.jsx";
 import PortfolioShowcasePage from "./pages/PortfolioShowcasePage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
+import Profile from "./pages/Profile";
+import AddSkill from "./pages/AddSkill";
+import MySkills from "./pages/MySkills";
+
 
 function App() {
   const [view, setView] = useState("landing");
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("skillswap_token"));
   const [status, setStatus] = useState({ type: "", message: "" });
+  
 
   useEffect(() => {
     async function loadProfile() {
@@ -98,18 +103,54 @@ function App() {
       <main className={user ? "app-main with-sidebar" : "app-main"}>
         {user ? <SideNav view={view === "landing" ? "dashboard" : view} setView={setView} /> : null}
 
-        <div className={user ? "content-panel" : undefined}>
-          {view === "landing" && !user ? <LandingPage user={user} setView={setView} /> : null}
-          {view === "dashboard" || (view === "landing" && user) ? <DashboardPage user={user} /> : null}
-          {view === "portfolio-showcase" ? <PortfolioShowcasePage token={token} /> : null}
-          {selectedFeature && view !== "portfolio-showcase" ? <FeaturePage feature={selectedFeature} /> : null}
-          {view === "login" ? (
-            <LoginPage onSubmit={(payload) => handleAuth("login", payload)} setView={setView} />
-          ) : null}
-          {view === "signup" ? (
-            <SignupPage onSubmit={(payload) => handleAuth("signup", payload)} setView={setView} />
-          ) : null}
-        </div>
+       <div className={user ? "content-panel" : undefined}>
+  {view === "landing" && !user ? (
+    <LandingPage user={user} setView={setView} />
+  ) : null}
+
+  {view === "dashboard" || (view === "landing" && user) ? (
+    <DashboardPage user={user} />
+  ) : null}
+
+  {view === "portfolio-showcase" ? (
+    <PortfolioShowcasePage token={token} />
+  ) : null}
+
+  {/* ===== YOUR NEW PAGES ===== */}
+
+  {view === "profile" ? (
+    <Profile user={user} token={token} />
+  ) : null}
+
+  {view === "my-skills" ? (
+    <MySkills token={token} />
+  ) : null}
+
+  {view === "add-skill" ? (
+    <AddSkill token={token} />
+  ) : null}
+
+  {/* ========================== */}
+
+  {selectedFeature &&
+  !["portfolio-showcase", "profile", "my-skills", "add-skill"].includes(view) ? (
+    <FeaturePage feature={selectedFeature} />
+  ) : null}
+
+  {view === "login" ? (
+    <LoginPage
+      onSubmit={(payload) => handleAuth("login", payload)}
+      setView={setView}
+    />
+  ) : null}
+
+  {view === "signup" ? (
+    <SignupPage
+      onSubmit={(payload) => handleAuth("signup", payload)}
+      setView={setView}
+    />
+  ) : null}
+</div>
       </main>
     </div>
   );
