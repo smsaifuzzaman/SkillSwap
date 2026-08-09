@@ -19,24 +19,29 @@ async function requestJSON(path, options = {}) {
   return data;
 }
 
-export function getCurrentUser(token) {
-  return requestJSON("/auth/me", {
+export function getSkills(token) {
+  return requestJSON("/skills", {
     headers: {
       Authorization: `Bearer ${token}`
     }
   });
 }
 
-export function loginUser(payload) {
-  return requestJSON("/auth/login", {
+export function addSkill(token, skillData) {
+  return requestJSON("/skills", {
     method: "POST",
-    body: JSON.stringify(payload)
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(skillData)
   });
 }
 
-export function signupUser(payload) {
-  return requestJSON("/auth/signup", {
-    method: "POST",
-    body: JSON.stringify(payload)
+export function deleteSkill(token, id) {
+  return requestJSON(`/skills/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   });
 }

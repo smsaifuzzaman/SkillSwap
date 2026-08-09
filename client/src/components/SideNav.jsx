@@ -1,4 +1,13 @@
-import { BriefcaseBusiness, CalendarDays, LayoutDashboard, Sparkles, Star } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  LayoutDashboard,
+  Sparkles,
+  Star,
+  User,
+  BookOpen,
+  PlusCircle,
+} from "lucide-react";
 import React from "react";
 import { memberFeatures } from "../data/memberFeatures.js";
 
@@ -6,15 +15,15 @@ const featureIcons = {
   "ai-matching": Sparkles,
   "session-scheduling": CalendarDays,
   "portfolio-showcase": BriefcaseBusiness,
-  "trust-reviews": Star
+  "trust-reviews": Star,
 };
 
 function SideNav({ view, setView }) {
   return (
-    <aside className="side-nav" aria-label="Feature navigation">
-      <div className="side-nav-title">
-        <span>SkillSwap</span>
-        <strong>Workspace</strong>
+    <aside className="side-nav">
+      <div className="side-nav-brand">
+        <h2>SkillSwap</h2>
+        <span>Workspace</span>
       </div>
 
       <button
@@ -28,6 +37,38 @@ function SideNav({ view, setView }) {
 
       <div className="side-nav-divider" />
 
+      {/* ===== YOUR NEW PAGES ===== */}
+
+      <button
+        className={`side-nav-item ${view === "profile" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("profile")}
+      >
+        <User size={19} />
+        Profile
+      </button>
+
+      <button
+        className={`side-nav-item ${view === "my-skills" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("my-skills")}
+      >
+        <BookOpen size={19} />
+        My Skills
+      </button>
+
+      <button
+        className={`side-nav-item ${view === "add-skill" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("add-skill")}
+      >
+        <PlusCircle size={19} />
+        Add Skill
+      </button>
+
+      <div className="side-nav-divider" />
+
+      {/* Existing Features */}
       {memberFeatures.map((feature) => {
         const Icon = featureIcons[feature.id];
 
