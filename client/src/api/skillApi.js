@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 async function requestJSON(path, options = {}) {
   const { headers, ...restOptions } = options;
@@ -21,6 +21,14 @@ async function requestJSON(path, options = {}) {
 
 export function getSkills(token) {
   return requestJSON("/skills", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function getSkillMatches(token) {
+  return requestJSON("/skills/matches", {
     headers: {
       Authorization: `Bearer ${token}`
     }

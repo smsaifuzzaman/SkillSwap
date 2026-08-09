@@ -24,7 +24,8 @@ export async function createPortfolioItem(req, res, next) {
       skill: req.body.skill,
       description: req.body.description,
       projectUrl: req.body.projectUrl,
-      imageUrl: req.body.imageUrl,
+      // If a picture was uploaded, we save the file path so the frontend can show it later.
+      imageUrl: req.file ? `/uploads/${req.file.filename}` : "",
       tags: normalizeTags(req.body.tags),
       visibility: req.body.visibility || "public"
     });

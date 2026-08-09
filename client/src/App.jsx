@@ -4,6 +4,7 @@ import Header from "./components/Header.jsx";
 import SideNav from "./components/SideNav.jsx";
 import Toast from "./components/Toast.jsx";
 import { memberFeatures } from "./data/memberFeatures.js";
+import AiMatchingPage from "./pages/AiMatchingPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import FeaturePage from "./pages/FeaturePage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
@@ -116,6 +117,10 @@ function App() {
     <PortfolioShowcasePage token={token} />
   ) : null}
 
+  {view === "ai-matching" ? (
+    <AiMatchingPage token={token} />
+  ) : null}
+
   {/* ===== YOUR NEW PAGES ===== */}
 
   {view === "profile" ? (
@@ -133,7 +138,7 @@ function App() {
   {/* ========================== */}
 
   {selectedFeature &&
-  !["portfolio-showcase", "profile", "my-skills", "add-skill"].includes(view) ? (
+  !["ai-matching", "portfolio-showcase", "profile", "my-skills", "add-skill"].includes(view) ? (
     <FeaturePage feature={selectedFeature} />
   ) : null}
 

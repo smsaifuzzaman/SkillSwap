@@ -1,10 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 async function portfolioRequest(path, token, options = {}) {
+  const isFormData = options.body instanceof FormData;
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       // Protected portfolio routes need the JWT token created during login/signup.
       Authorization: `Bearer ${token}`,
       ...(options.headers || {})
@@ -25,9 +27,17 @@ export function getMyPortfolioItems(token) {
 }
 
 export function createPortfolioItem(token, payload) {
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value) {
+      formData.append(key, value);
+    }
+  });
+
   return portfolioRequest("/portfolio", token, {
     method: "POST",
-    body: JSON.stringify(payload)
+    body: formData
   });
 }
 
