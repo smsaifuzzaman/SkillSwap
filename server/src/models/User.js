@@ -97,38 +97,38 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+
     teachingSkills: [
-  {
-    skillName: String,
-    proficiency: {
-      type: String,
-      enum: ["Beginner", "Intermediate", "Advanced", "Expert"]
-    },
-    sessionDuration: Number,
-    preferredFormat: {
-      type: String,
-      enum: ["Online", "Offline", "Hybrid"]
-    },
-    description: String
-  }
-],
+      {
+        skillName: String,
+        proficiency: {
+          type: String,
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"]
+        },
+        sessionDuration: Number,
+        preferredFormat: {
+          type: String,
+          enum: ["Online", "Offline", "Hybrid"]
+        },
+        description: String
+      }
+    ],
 
-  learningSkills: [
-  {
-    skillName: String,
-    proficiency: {
-      type: String,
-      enum: ["Beginner", "Intermediate", "Advanced", "Expert"]
-    },
-    sessionDuration: Number,
-    preferredFormat: {
-      type: String,
-      enum: ["Online", "Offline", "Hybrid"]
-    },
-    description: String
-  }
-],
-
+    learningSkills: [
+      {
+        skillName: String,
+        proficiency: {
+          type: String,
+          enum: ["Beginner", "Intermediate", "Advanced", "Expert"]
+        },
+        sessionDuration: Number,
+        preferredFormat: {
+          type: String,
+          enum: ["Online", "Offline", "Hybrid"]
+        },
+        description: String
+      }
+    ],
 
     // Swap history
     swapHistory: [
@@ -196,41 +196,23 @@ userSchema.methods.comparePassword = function (candidatePassword) {
 userSchema.methods.toSafeJSON = function () {
   return {
     id: this._id,
-
     name: this.name,
-
     email: this.email,
-
     role: this.role,
-
     skillLevel: this.skillLevel,
-
     expertise: this.expertise,
-
     desiredSkills: this.desiredSkills,
-
     bio: this.bio,
-
     location: this.location,
-
     profilePhoto: this.profilePhoto,
-
     teachingSkills: this.teachingSkills,
-
     learningSkills: this.learningSkills,
-
     availability: this.availability,
-
     preferredFormat: this.preferredFormat,
-
     rating: this.rating,
-
     totalSwaps: this.totalSwaps,
-
     swapHistory: this.swapHistory,
-
     createdAt: this.createdAt,
-
     updatedAt: this.updatedAt
   };
 };

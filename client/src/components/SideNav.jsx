@@ -7,6 +7,7 @@ import {
   User,
   BookOpen,
   PlusCircle,
+  Zap
 } from "lucide-react";
 import React from "react";
 import { memberFeatures } from "../data/memberFeatures.js";
@@ -37,8 +38,6 @@ function SideNav({ view, setView }) {
 
       <div className="side-nav-divider" />
 
-      {/* ===== YOUR NEW PAGES ===== */}
-
       <button
         className={`side-nav-item ${view === "profile" ? "active" : ""}`}
         type="button"
@@ -55,6 +54,15 @@ function SideNav({ view, setView }) {
       >
         <BookOpen size={19} />
         My Skills
+      </button>
+
+      <button
+        className={`side-nav-item ${view === "featured-skills" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("featured-skills")}
+      >
+        <Zap size={19} />
+        Featured Listings
       </button>
 
       <button
@@ -77,7 +85,6 @@ function SideNav({ view, setView }) {
 
       <div className="side-nav-divider" />
 
-      {/* Existing Features */}
       {memberFeatures.map((feature) => {
         const Icon = featureIcons[feature.id];
 
@@ -88,7 +95,7 @@ function SideNav({ view, setView }) {
             key={feature.id}
             onClick={() => setView(feature.id)}
           >
-            <Icon size={19} />
+            {Icon ? <Icon size={19} /> : null}
             {feature.title}
           </button>
         );

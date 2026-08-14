@@ -35,6 +35,14 @@ export function getSkillMatches(token) {
   });
 }
 
+export function getMatches(token) {
+  return requestJSON("/skills/match", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function addSkill(token, skillData) {
   return requestJSON("/skills", {
     method: "POST",
@@ -54,10 +62,26 @@ export function deleteSkill(token, id) {
   });
 }
 
-export function getMatches(token) {
-  return requestJSON("/skills/match", {
+export function boostSkillListing(token, skillId, amount = 5.0) {
+  return requestJSON(`/skills/${skillId}/boost`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ amount })
+  });
+}
+
+export function renewSkillListingBoost(token, skillId) {
+  return requestJSON(`/skills/${skillId}/renew-boost`, {
+    method: "POST",
     headers: {
       Authorization: `Bearer ${token}`
     }
   });
 }
+
+export function getFeaturedSkills() {
+  return requestJSON("/skills/featured");
+}
+

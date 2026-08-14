@@ -9,11 +9,11 @@ const proficiencyRank = {
 };
 
 function cleanSkillName(skillName = "") {
-  return skillName.trim().toLowerCase();
+  return String(skillName || "").trim().toLowerCase();
 }
 
 function getDescriptionWords(description = "") {
-  return description
+  return String(description || "")
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter((word) => word.length > 3);
@@ -44,13 +44,11 @@ function buildMatchScore(learningSkill, teachingSkill, learner) {
   let score = 50;
   const reasons = [];
 
-  // Algorithm step 1: exact skill match is required before scoring, then it gives the biggest bonus.
   if (cleanSkillName(learningSkill.skillName) === cleanSkillName(teachingSkill.skillName)) {
     score += 30;
     reasons.push(`Both users matched on ${teachingSkill.skillName}.`);
   }
 
-  // Algorithm step 2: format mismatch is a major penalty because Online/Offline/Hybrid affects the session plan.
   if (learningSkill.preferredFormat === teachingSkill.preferredFormat) {
     score += 14;
     reasons.push(`Both prefer ${teachingSkill.preferredFormat} sessions.`);
@@ -62,7 +60,6 @@ function buildMatchScore(learningSkill, teachingSkill, learner) {
   const teacherRank = proficiencyRank[teachingSkill.proficiency] || 0;
   const learnerRank = proficiencyRank[learningSkill.proficiency] || 0;
 
-  // Algorithm step 3: teacher level must be at least the learner goal; lower teacher level drops hard.
   if (teacherRank >= learnerRank) {
     score += teacherRank === learnerRank ? 10 : 14;
     reasons.push(`${teachingSkill.proficiency} teaching level fits your ${learningSkill.proficiency} goal.`);
@@ -75,7 +72,6 @@ function buildMatchScore(learningSkill, teachingSkill, learner) {
   const teacherDuration = teachingSkill.sessionDuration || 60;
   const durationDifference = Math.abs(learnerDuration - teacherDuration);
 
-  // Algorithm step 4: duration is intentionally strict; even 45 minutes vs 60 minutes loses points.
   if (durationDifference === 0) {
     score += 15;
     reasons.push("Session duration exactly matches your preference.");
@@ -91,14 +87,12 @@ function buildMatchScore(learningSkill, teachingSkill, learner) {
   }
 
   const availabilityScore = getAvailabilityScore(learner.availability, teachingSkill.owner?.availability);
-  // Algorithm step 5: weekday/weekend availability mismatch has real weight; "Anytime" is treated as flexible.
   score += availabilityScore.points;
   reasons.push(availabilityScore.reason);
 
   const learningWords = new Set(getDescriptionWords(learningSkill.description));
   const sharedWords = getDescriptionWords(teachingSkill.description).filter((word) => learningWords.has(word));
 
-  // Algorithm step 6: description keyword overlap is a small tie-breaker, not enough to rescue a bad match.
   if (sharedWords.length > 0) {
     score += 4;
     reasons.push("Descriptions have similar keywords.");
@@ -110,63 +104,65 @@ function buildMatchScore(learningSkill, teachingSkill, learner) {
   };
 }
 
-export const createSkill = async (req,res)=>{
+export const createSkill = async (req, res) => {
+  try {
+    const skill = await Skill.create({
+      owner: req.user.id,
+      ...req.body
+    });
 
-try{
-
-const skill=await Skill.create({
-    owner:req.user.id,
-    ...req.body
-});
-
-res.status(201).json(skill);
-
-}catch(err){
-
-res.status(500).json({
-message:err.message
-});
-
-}
-
+    res.status(201).json(skill);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
 };
 
-export const getSkills=async(req,res)=>{
+export const getSkills = async (req, res) => {
+  try {
+    const skills = await Skill.find({
+      owner: req.user.id
+    });
 
-const skills=await Skill.find({
-owner:req.user.id
-});
-
-res.json(skills);
-
+    res.json(skills);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
 };
 
-export const updateSkill=async(req,res)=>{
+export const updateSkill = async (req, res) => {
+  try {
+    const skill = await Skill.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true
+      }
+    );
 
-const skill=await Skill.findByIdAndUpdate(
-
-req.params.id,
-
-req.body,
-
-{
-new:true
-}
-
-);
-
-res.json(skill);
-
+    res.json(skill);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
 };
 
-export const deleteSkill=async(req,res)=>{
+export const deleteSkill = async (req, res) => {
+  try {
+    await Skill.findByIdAndDelete(req.params.id);
 
-await Skill.findByIdAndDelete(req.params.id);
-
-res.json({
-message:"Skill deleted"
-});
-
+    res.json({
+      message: "Skill deleted"
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message
+    });
+  }
 };
 
 export const getMatches = async (req, res) => {
@@ -176,8 +172,8 @@ export const getMatches = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const myLearningSkills = currentUser.learningSkills.map(s => s.skillName.toLowerCase());
-    const myTeachingSkills = currentUser.teachingSkills.map(s => s.skillName.toLowerCase());
+    const myLearningSkills = (currentUser.learningSkills || []).map((skill) => String(skill.skillName || "").toLowerCase());
+    const myTeachingSkills = (currentUser.teachingSkills || []).map((skill) => String(skill.skillName || "").toLowerCase());
 
     const allUsers = await User.find({ _id: { $ne: currentUser._id } });
 
@@ -185,22 +181,22 @@ export const getMatches = async (req, res) => {
     const partialMatches = [];
     const exploreMatches = [];
 
-    allUsers.forEach(user => {
-      const userTeachingSkills = user.teachingSkills.map(s => s.skillName.toLowerCase());
-      const userLearningSkills = user.learningSkills.map(s => s.skillName.toLowerCase());
+    allUsers.forEach((user) => {
+      const userTeachingSkills = (user.teachingSkills || []).map((skill) => String(skill.skillName || "").toLowerCase());
+      const userLearningSkills = (user.learningSkills || []).map((skill) => String(skill.skillName || "").toLowerCase());
 
-      const theyTeachWhatIWantToLearn = userTeachingSkills.some(skill => myLearningSkills.includes(skill));
-      const theyWantToLearnWhatITeach = userLearningSkills.some(skill => myTeachingSkills.includes(skill));
+      const theyTeachWhatIWantToLearn = userTeachingSkills.some((skill) => myLearningSkills.includes(skill));
+      const theyWantToLearnWhatITeach = userLearningSkills.some((skill) => myTeachingSkills.includes(skill));
 
       if (theyTeachWhatIWantToLearn && theyWantToLearnWhatITeach) {
         directMatches.push(user.toSafeJSON());
       } else if (theyTeachWhatIWantToLearn || theyWantToLearnWhatITeach) {
-        const missingToTeach = theyTeachWhatIWantToLearn && !theyWantToLearnWhatITeach 
-          ? user.learningSkills.filter(s => !myTeachingSkills.includes(s.skillName.toLowerCase()))
+        const missingToTeach = theyTeachWhatIWantToLearn && !theyWantToLearnWhatITeach
+          ? (user.learningSkills || []).filter((skill) => !myTeachingSkills.includes(String(skill.skillName || "").toLowerCase()))
           : [];
 
         const missingToLearn = theyWantToLearnWhatITeach && !theyTeachWhatIWantToLearn
-          ? user.teachingSkills.filter(s => !myLearningSkills.includes(s.skillName.toLowerCase()))
+          ? (user.teachingSkills || []).filter((skill) => !myLearningSkills.includes(String(skill.skillName || "").toLowerCase()))
           : [];
 
         partialMatches.push({
@@ -211,8 +207,8 @@ export const getMatches = async (req, res) => {
       } else {
         exploreMatches.push({
           ...user.toSafeJSON(),
-          missingToTeach: user.learningSkills,
-          missingToLearn: user.teachingSkills
+          missingToTeach: user.learningSkills || [],
+          missingToLearn: user.teachingSkills || []
         });
       }
     });
@@ -222,6 +218,7 @@ export const getMatches = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 export const getSkillMatches = async (req, res) => {
   try {
     const mySkills = await Skill.find({
@@ -252,7 +249,6 @@ export const getSkillMatches = async (req, res) => {
 
         const match = buildMatchScore(learningSkill, teachingSkill, req.user);
 
-        // Algorithm threshold: stricter scoring means weak matches are hidden from the recommendation list.
         if (match.score < 55) {
           return;
         }
@@ -301,5 +297,89 @@ export const getSkillMatches = async (req, res) => {
     res.status(500).json({
       message: err.message
     });
+  }
+};
+
+export const boostSkill = async (req, res) => {
+  try {
+    const skill = await Skill.findOne({ _id: req.params.id, owner: req.user.id });
+
+    if (!skill) {
+      return res.status(404).json({ message: "Skill listing not found or unauthorized." });
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    skill.isBoosted = true;
+    skill.boostActivatedAt = now;
+    skill.boostExpiresAt = expiresAt;
+    skill.boostPricePaid = req.body.amount || 5.0;
+    skill.renewalCount = 0;
+
+    await skill.save();
+
+    res.status(200).json({
+      message: `"${skill.skillName}" boosted successfully for 7 days!`,
+      skill: {
+        ...skill.toObject(),
+        boostStatus: skill.getBoostStatus()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const renewSkillBoost = async (req, res) => {
+  try {
+    const skill = await Skill.findOne({ _id: req.params.id, owner: req.user.id });
+
+    if (!skill) {
+      return res.status(404).json({ message: "Skill listing not found or unauthorized." });
+    }
+
+    const now = new Date();
+    const baseDate = skill.boostExpiresAt && new Date(skill.boostExpiresAt) > now
+      ? new Date(skill.boostExpiresAt)
+      : now;
+
+    const newExpiresAt = new Date(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    skill.isBoosted = true;
+    skill.boostExpiresAt = newExpiresAt;
+    skill.renewalCount = (skill.renewalCount || 0) + 1;
+
+    await skill.save();
+
+    res.status(200).json({
+      message: `Boost renewed successfully until ${newExpiresAt.toLocaleDateString()}!`,
+      skill: {
+        ...skill.toObject(),
+        boostStatus: skill.getBoostStatus()
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getFeaturedSkills = async (req, res) => {
+  try {
+    const now = new Date();
+    const featuredSkills = await Skill.find({
+      type: "teach",
+      isBoosted: true,
+      boostExpiresAt: { $gt: now }
+    })
+      .populate("owner", "name email location availability rating totalSwaps")
+      .sort({ boostExpiresAt: -1 });
+
+    res.json({
+      count: featuredSkills.length,
+      skills: featuredSkills
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
