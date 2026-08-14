@@ -215,6 +215,10 @@ userSchema.methods.toSafeJSON = function () {
 
     profilePhoto: this.profilePhoto,
 
+    teachingSkills: this.teachingSkills,
+
+    learningSkills: this.learningSkills,
+
     availability: this.availability,
 
     preferredFormat: this.preferredFormat,
