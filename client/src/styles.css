@@ -973,6 +973,152 @@ h1 {
   font-size: 1.2rem;
 }
 
+.scheduling-page {
+  display: grid;
+  gap: 1rem;
+  padding-top: 2rem;
+}
+
+.scheduling-layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 25rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.scheduling-form {
+  top: 1rem;
+}
+
+.scheduling-feed {
+  min-width: 0;
+}
+
+.time-dial-row {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 1fr) minmax(4.5rem, 1fr) minmax(6.5rem, 1.35fr);
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.wheel-select {
+  height: 9rem;
+  padding: 0.35rem;
+  overflow-y: auto;
+}
+
+.field .wheel-select option {
+  padding: 0.42rem 0.5rem;
+  border-radius: 0.45rem;
+}
+
+.duration-wheel {
+  min-width: 0;
+}
+
+.session-card {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: rgba(18, 14, 40, 0.7);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.22);
+}
+
+.session-card-top,
+.session-meta-grid span,
+.session-complete {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.session-card-top {
+  justify-content: space-between;
+}
+
+.session-card h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1.45rem;
+}
+
+.session-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.session-card select {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.session-card select option {
+  color: #120e28;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(242, 195, 130, 0.35);
+  border-radius: 0.7rem;
+  color: var(--cream);
+  background: rgba(242, 195, 130, 0.08);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.session-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.session-meta-grid span {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.07);
+  overflow-wrap: anywhere;
+}
+
+.session-meta-grid svg,
+.session-complete svg {
+  flex: 0 0 auto;
+  color: var(--cream);
+}
+
+.session-complete {
+  width: fit-content;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(242, 195, 130, 0.35);
+  border-radius: 999px;
+  color: var(--cream);
+  background: rgba(242, 195, 130, 0.08);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.session-preference-field textarea {
+  min-height: 5.5rem;
+}
+
+.session-preference-field textarea:read-only {
+  cursor: default;
+  opacity: 0.72;
+}
+
 .auth-page {
   display: grid;
   min-height: calc(100vh - 5.5rem);
@@ -1070,6 +1216,7 @@ h1 {
 
   .portfolio-header,
   .portfolio-layout,
+  .scheduling-layout,
   .match-grid {
     grid-template-columns: 1fr;
   }
@@ -1122,6 +1269,20 @@ h1 {
 
   .match-skill-pair {
     grid-template-columns: 1fr;
+  }
+
+  .session-card-top,
+  .session-card .portfolio-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .session-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .time-dial-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .hero-panel {

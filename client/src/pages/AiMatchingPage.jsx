@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { BookOpen, BrainCircuit, Clock, MapPin, Star, UserRoundCheck, Video } from "lucide-react";
 import { getSkillMatches } from "../api/skillApi";
 
-function AiMatchingPage({ token }) {
+function AiMatchingPage({ token, onScheduleSession }) {
   const [matches, setMatches] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -133,15 +133,11 @@ function AiMatchingPage({ token }) {
                 </span>
               </div>
 
-              <div className="match-reasons">
-                <span>Why this match?</span>
-                {/* These are the simple AI-style explanations from the backend score. */}
-                {match.reasons.map((reason) => (
-                  <p key={reason}>{reason}</p>
-                ))}
-              </div>
-
-              <button className="primary-button full" type="button">
+              <button
+                className="primary-button full"
+                type="button"
+                onClick={() => onScheduleSession(match)}
+              >
                 Request Session
               </button>
             </article>

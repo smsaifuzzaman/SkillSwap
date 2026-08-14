@@ -18,41 +18,93 @@ function getDescriptionWords(description = "") {
     .filter((word) => word.length > 3);
 }
 
-function buildMatchScore(learningSkill, teachingSkill) {
-  let score = 55;
+function getAvailabilityScore(learnerAvailability = "Anytime", teacherAvailability = "Anytime") {
+  if (learnerAvailability === teacherAvailability) {
+    return {
+      points: 12,
+      reason: `Both users are available on ${teacherAvailability}.`
+    };
+  }
+
+  if (learnerAvailability === "Anytime" || teacherAvailability === "Anytime") {
+    return {
+      points: 4,
+      reason: "One user has flexible availability."
+    };
+  }
+
+  return {
+    points: -22,
+    reason: `${learnerAvailability} and ${teacherAvailability} availability do not match.`
+  };
+}
+
+function buildMatchScore(learningSkill, teachingSkill, learner) {
+  let score = 50;
   const reasons = [];
 
-  // Main matching logic: same skill name means this person can teach what I want to learn.
+  // Algorithm step 1: exact skill match is required before scoring, then it gives the biggest bonus.
   if (cleanSkillName(learningSkill.skillName) === cleanSkillName(teachingSkill.skillName)) {
-    score += 25;
+    score += 30;
     reasons.push(`Both users matched on ${teachingSkill.skillName}.`);
   }
 
+  // Algorithm step 2: format mismatch is a major penalty because Online/Offline/Hybrid affects the session plan.
   if (learningSkill.preferredFormat === teachingSkill.preferredFormat) {
-    score += 10;
+    score += 14;
     reasons.push(`Both prefer ${teachingSkill.preferredFormat} sessions.`);
+  } else {
+    score -= 18;
+    reasons.push(`Format mismatch: you prefer ${learningSkill.preferredFormat}, teacher offers ${teachingSkill.preferredFormat}.`);
   }
 
-  if ((proficiencyRank[teachingSkill.proficiency] || 0) >= (proficiencyRank[learningSkill.proficiency] || 0)) {
-    score += 8;
+  const teacherRank = proficiencyRank[teachingSkill.proficiency] || 0;
+  const learnerRank = proficiencyRank[learningSkill.proficiency] || 0;
+
+  // Algorithm step 3: teacher level must be at least the learner goal; lower teacher level drops hard.
+  if (teacherRank >= learnerRank) {
+    score += teacherRank === learnerRank ? 10 : 14;
     reasons.push(`${teachingSkill.proficiency} teaching level fits your ${learningSkill.proficiency} goal.`);
+  } else {
+    score -= 24 + (learnerRank - teacherRank) * 6;
+    reasons.push(`${teachingSkill.proficiency} teaching level is below your ${learningSkill.proficiency} goal.`);
   }
 
-  if (Math.abs((learningSkill.sessionDuration || 60) - (teachingSkill.sessionDuration || 60)) <= 30) {
-    score += 5;
-    reasons.push("Session duration is close to your preference.");
+  const learnerDuration = learningSkill.sessionDuration || 60;
+  const teacherDuration = teachingSkill.sessionDuration || 60;
+  const durationDifference = Math.abs(learnerDuration - teacherDuration);
+
+  // Algorithm step 4: duration is intentionally strict; even 45 minutes vs 60 minutes loses points.
+  if (durationDifference === 0) {
+    score += 15;
+    reasons.push("Session duration exactly matches your preference.");
+  } else if (durationDifference <= 15) {
+    score -= 10;
+    reasons.push(`Duration differs by ${durationDifference} minutes.`);
+  } else if (durationDifference <= 30) {
+    score -= 20;
+    reasons.push(`Duration differs by ${durationDifference} minutes.`);
+  } else {
+    score -= 35;
+    reasons.push(`Duration differs too much: ${learnerDuration} minutes vs ${teacherDuration} minutes.`);
   }
+
+  const availabilityScore = getAvailabilityScore(learner.availability, teachingSkill.owner?.availability);
+  // Algorithm step 5: weekday/weekend availability mismatch has real weight; "Anytime" is treated as flexible.
+  score += availabilityScore.points;
+  reasons.push(availabilityScore.reason);
 
   const learningWords = new Set(getDescriptionWords(learningSkill.description));
   const sharedWords = getDescriptionWords(teachingSkill.description).filter((word) => learningWords.has(word));
 
+  // Algorithm step 6: description keyword overlap is a small tie-breaker, not enough to rescue a bad match.
   if (sharedWords.length > 0) {
     score += 4;
     reasons.push("Descriptions have similar keywords.");
   }
 
   return {
-    score: Math.min(score, 100),
+    score: Math.max(0, Math.min(score, 100)),
     reasons
   };
 }
@@ -144,10 +196,10 @@ export const getSkillMatches = async (req, res) => {
           return;
         }
 
-        const match = buildMatchScore(learningSkill, teachingSkill);
+        const match = buildMatchScore(learningSkill, teachingSkill, req.user);
 
-        // Keeping only useful matches so the page does not feel random.
-        if (match.score < 60) {
+        // Algorithm threshold: stricter scoring means weak matches are hidden from the recommendation list.
+        if (match.score < 55) {
           return;
         }
 
