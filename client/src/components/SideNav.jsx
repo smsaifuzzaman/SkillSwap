@@ -66,6 +66,15 @@ function SideNav({ view, setView }) {
         Add Skill
       </button>
 
+      <button
+        className={`side-nav-item ${view === "alternative-skills" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("alternative-skills")}
+      >
+        <Sparkles size={19} />
+        Alternative Skills
+      </button>
+
       <div className="side-nav-divider" />
 
       {/* Existing Features */}

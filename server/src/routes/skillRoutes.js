@@ -5,11 +5,14 @@ import {
   getSkills,
   getSkillMatches,
   updateSkill,
-  deleteSkill
+  deleteSkill,
+  getMatches
 } from "../controllers/skillController.js";
 import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
+
+router.get("/match", protect, getMatches);
 
 router.post("/", protect, createSkill);
 router.get("/", protect, getSkills);

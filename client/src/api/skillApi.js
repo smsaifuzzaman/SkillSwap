@@ -53,3 +53,11 @@ export function deleteSkill(token, id) {
     }
   });
 }
+
+export function getMatches(token) {
+  return requestJSON("/skills/match", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}

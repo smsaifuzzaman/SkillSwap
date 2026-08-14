@@ -16,8 +16,7 @@ import { parseError } from "./utils/errors.js";
 import Profile from "./pages/Profile";
 import AddSkill from "./pages/AddSkill";
 import MySkills from "./pages/MySkills";
-
-
+import MatchPage from "./pages/MatchPage";
 function App() {
   const [view, setView] = useState("landing");
   const [user, setUser] = useState(null);
@@ -159,10 +158,14 @@ function App() {
     <AddSkill token={token} />
   ) : null}
 
+  {view === "alternative-skills" ? (
+    <MatchPage token={token} showAlternativeOnly={true} />
+  ) : null}
+
   {/* ========================== */}
 
   {selectedFeature &&
-  !["ai-matching", "session-scheduling", "portfolio-showcase", "profile", "my-skills", "add-skill"].includes(view) ? (
+  !["ai-matching", "session-scheduling", "portfolio-showcase", "profile", "my-skills", "add-skill", "alternative-skills"].includes(view) ? (
     <FeaturePage feature={selectedFeature} />
   ) : null}
 
