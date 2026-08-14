@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import portfolioRoutes from "./routes/portfolioRoutes.js";
 import skillRoutes from "./routes/skillRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import sessionRoutes from "./routes/sessionRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/sessions", sessionRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

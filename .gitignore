@@ -6,4 +6,5 @@ dist/
 npm-debug.log*
 coverage/
 .runtime/
+server/uploads/
 .DS_Store

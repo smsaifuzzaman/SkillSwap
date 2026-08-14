@@ -1,0 +1,227 @@
+import { Session } from "../models/Session.js";
+
+function addMinutes(date, minutes) {
+  return new Date(date.getTime() + minutes * 60 * 1000);
+}
+
+function formatGoogleDate(date) {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function getIdString(value) {
+  return value?._id?.toString() || value?.toString() || "";
+}
+
+function buildGoogleCalendarUrl(session) {
+  const start = new Date(session.scheduledFor);
+  const end = addMinutes(start, session.durationMinutes || 60);
+  const details = [
+    `SkillSwap session with ${session.partnerName}.`,
+    session.meetingLink ? `Meeting link: ${session.meetingLink}` : "",
+    session.notes ? `Notes: ${session.notes}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `SkillSwap: ${session.skillName}`,
+    dates: `${formatGoogleDate(start)}/${formatGoogleDate(end)}`,
+    details,
+    add: session.reminderEmail
+  });
+
+  const location = session.meetingLink || session.location;
+
+  if (location) {
+    params.set("location", location);
+  }
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function serializeSession(session, viewerId) {
+  const status = session.status === "Scheduled" ? "Accepted" : session.status;
+  const ownerId = getIdString(session.owner);
+  const partnerId = getIdString(session.partnerId);
+  const viewerRole = viewerId === partnerId ? "recipient" : "requester";
+
+  return {
+    id: session._id,
+    ownerId,
+    requesterName: session.owner?.name || "SkillSwap member",
+    skillName: session.skillName,
+    partnerName: session.partnerName,
+    partnerId,
+    scheduledFor: session.scheduledFor,
+    durationMinutes: session.durationMinutes,
+    format: session.format,
+    meetingLink: session.meetingLink,
+    location: session.location,
+    reminderEmail: session.reminderEmail,
+    notes: session.notes,
+    preferenceNotes: session.preferenceNotes,
+    status,
+    viewerRole,
+    googleCalendarUrl: buildGoogleCalendarUrl(session),
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt
+  };
+}
+
+export async function createSession(req, res) {
+  try {
+    const scheduledFor = new Date(req.body.scheduledFor);
+
+    if (Number.isNaN(scheduledFor.getTime())) {
+      return res.status(400).json({
+        message: "Please choose a valid session date and time."
+      });
+    }
+
+    const session = await Session.create({
+      owner: req.user.id,
+      skillName: req.body.skillName,
+      partnerName: req.body.partnerName,
+      partnerId: req.body.partnerId || null,
+      scheduledFor,
+      durationMinutes: req.body.durationMinutes,
+      format: req.body.format,
+      meetingLink: req.body.meetingLink,
+      location: req.body.location,
+      reminderEmail: req.body.reminderEmail,
+      notes: req.body.notes,
+      preferenceNotes: req.body.preferenceNotes
+    });
+
+    res.status(201).json({
+      session: serializeSession(session, req.user.id),
+      message: "Session request sent. It stays pending until the other user accepts it."
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message
+    });
+  }
+}
+
+export async function getSessions(req, res) {
+  try {
+    const sessions = await Session.find({
+      $or: [
+        {
+          owner: req.user.id
+        },
+        {
+          partnerId: req.user.id
+        }
+      ]
+    })
+      .populate("owner", "name email")
+      .populate("partnerId", "name email")
+      .sort({
+        scheduledFor: 1
+      });
+
+    res.json({
+      sessions: sessions.map((session) => serializeSession(session, req.user.id))
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+}
+
+export async function updateSessionStatus(req, res) {
+  try {
+    const allowedStatuses = ["Pending", "Accepted", "Change Requested", "Completed", "Cancelled"];
+
+    if (!allowedStatuses.includes(req.body.status)) {
+      return res.status(400).json({
+        message: "Status must be Pending, Accepted, Change Requested, Completed, or Cancelled."
+      });
+    }
+
+    const existingSession = await Session.findOne({
+      _id: req.params.id,
+      $or: [
+        {
+          owner: req.user.id
+        },
+        {
+          partnerId: req.user.id
+        }
+      ]
+    });
+
+    if (!existingSession) {
+      return res.status(404).json({
+        message: "Session not found."
+      });
+    }
+
+    const isRequester = getIdString(existingSession.owner) === req.user.id;
+    const isRecipient = getIdString(existingSession.partnerId) === req.user.id;
+    const requesterAllowedStatuses = ["Cancelled"];
+
+    if (isRequester && !requesterAllowedStatuses.includes(req.body.status)) {
+      return res.status(403).json({
+        message: "Only the user whose skill is requested can accept or change this session."
+      });
+    }
+
+    if (!isRecipient && !isRequester) {
+      return res.status(403).json({
+        message: "You do not have permission to update this session."
+      });
+    }
+
+    const update = isRecipient
+      ? {
+          status: req.body.status,
+          preferenceNotes: req.body.preferenceNotes
+        }
+      : {
+          status: req.body.status
+        };
+
+    const session = await Session.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true
+    })
+      .populate("owner", "name email")
+      .populate("partnerId", "name email");
+
+    res.json({
+      session: serializeSession(session, req.user.id)
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message
+    });
+  }
+}
+
+export async function deleteSession(req, res) {
+  try {
+    const session = await Session.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user.id
+    });
+
+    if (!session) {
+      return res.status(404).json({
+        message: "Session not found."
+      });
+    }
+
+    res.json({
+      message: "Session deleted."
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message
+    });
+  }
+}

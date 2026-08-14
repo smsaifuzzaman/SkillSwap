@@ -19,39 +19,39 @@ async function requestJSON(path, options = {}) {
   return data;
 }
 
-export function getProfile(token) {
-  return requestJSON("/profile", {
+export function getSessions(token) {
+  return requestJSON("/sessions", {
     headers: {
       Authorization: `Bearer ${token}`
     }
   });
 }
 
-export function updateProfile(token, profileData) {
-  return requestJSON("/profile", {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(profileData)
-  });
-}
-
-export async function uploadProfilePhoto(token, file) {
-  const formData = new FormData();
-  formData.append("photo", file);
-
-  const response = await fetch(`${API_URL}/profile/photo`, {
+export function createSession(token, sessionData) {
+  return requestJSON("/sessions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`
     },
-    body: formData
+    body: JSON.stringify(sessionData)
   });
+}
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || "Failed to upload photo.");
-  }
-  return data;
+export function updateSessionStatus(token, id, status, preferenceNotes = "") {
+  return requestJSON(`/sessions/${id}/status`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ status, preferenceNotes })
+  });
+}
+
+export function deleteSession(token, id) {
+  return requestJSON(`/sessions/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
 }

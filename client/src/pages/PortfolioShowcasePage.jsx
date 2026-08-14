@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { BriefcaseBusiness, ExternalLink, ImagePlus, Plus, Trash2 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortfolioItem, deletePortfolioItem, getMyPortfolioItems } from "../api/portfolioApi.js";
 import { parseError } from "../utils/errors.js";
@@ -8,7 +8,7 @@ const emptyForm = {
   skill: "",
   description: "",
   projectUrl: "",
-  imageUrl: "",
+  image: null,
   tags: "",
   visibility: "public"
 };
@@ -140,13 +140,17 @@ function PortfolioShowcasePage({ token }) {
           </label>
 
           <label className="field">
-            <span>Image link</span>
-            <input
-              type="url"
-              value={form.imageUrl}
-              onChange={(event) => updateField("imageUrl", event.target.value)}
-              placeholder="https://example.com/project-screenshot.png"
-            />
+            <span>Project picture</span>
+            <label className="upload-dropzone">
+              <ImagePlus size={22} />
+              <strong>{form.image ? form.image.name : "Upload a picture"}</strong>
+              <small>PNG, JPG, or JPEG</small>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                onChange={(event) => updateField("image", event.target.files?.[0] || null)}
+              />
+            </label>
           </label>
 
           <label className="field">

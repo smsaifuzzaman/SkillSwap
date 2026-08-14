@@ -4,11 +4,13 @@ import Header from "./components/Header.jsx";
 import SideNav from "./components/SideNav.jsx";
 import Toast from "./components/Toast.jsx";
 import { memberFeatures } from "./data/memberFeatures.js";
+import AiMatchingPage from "./pages/AiMatchingPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import FeaturePage from "./pages/FeaturePage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import PortfolioShowcasePage from "./pages/PortfolioShowcasePage.jsx";
+import SessionSchedulingPage from "./pages/SessionSchedulingPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
 import Profile from "./pages/Profile";
@@ -20,6 +22,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("skillswap_token"));
   const [status, setStatus] = useState({ type: "", message: "" });
+  const [schedulingDraft, setSchedulingDraft] = useState(null);
   
 
   useEffect(() => {
@@ -91,6 +94,19 @@ function App() {
     setStatus({ type: "success", message: "You have been logged out." });
   }
 
+  function handleScheduleFromMatch(match) {
+    setSchedulingDraft({
+      skillName: match.learningSkill.skillName,
+      partnerName: match.teacher.name,
+      partnerId: match.teacher.id,
+      durationMinutes: String(match.teacherSkill.sessionDuration || 60),
+      format: match.teacherSkill.preferredFormat || match.teacher.preferredFormat || "Online",
+      location: match.teacher.location || "",
+      notes: `Requested from AI match: ${match.teacher.name} can teach ${match.teacherSkill.skillName}.`
+    });
+    setView("session-scheduling");
+  }
+
   const selectedFeature = memberFeatures.find((feature) => feature.id === view);
 
   return (
@@ -115,6 +131,19 @@ function App() {
     <PortfolioShowcasePage token={token} />
   ) : null}
 
+  {view === "ai-matching" ? (
+    <AiMatchingPage token={token} onScheduleSession={handleScheduleFromMatch} />
+  ) : null}
+
+  {view === "session-scheduling" ? (
+    <SessionSchedulingPage
+      user={user}
+      token={token}
+      draft={schedulingDraft}
+      onDraftApplied={() => setSchedulingDraft(null)}
+    />
+  ) : null}
+
   {/* ===== YOUR NEW PAGES ===== */}
 
   {view === "profile" ? (
@@ -129,10 +158,6 @@ function App() {
     <AddSkill token={token} />
   ) : null}
 
-  {view === "ai-matching" ? (
-    <MatchPage token={token} />
-  ) : null}
-
   {view === "alternative-skills" ? (
     <MatchPage token={token} showAlternativeOnly={true} />
   ) : null}
@@ -140,7 +165,7 @@ function App() {
   {/* ========================== */}
 
   {selectedFeature &&
-  !["portfolio-showcase", "profile", "my-skills", "add-skill", "ai-matching", "alternative-skills"].includes(view) ? (
+  !["ai-matching", "session-scheduling", "portfolio-showcase", "profile", "my-skills", "add-skill", "alternative-skills"].includes(view) ? (
     <FeaturePage feature={selectedFeature} />
   ) : null}
 

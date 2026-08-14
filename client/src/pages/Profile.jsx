@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Edit2, Save, Plus, X, Star, Camera } from "lucide-react";
 import { getProfile, updateProfile, uploadProfilePhoto } from "../api/profileApi";
 
-const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
+const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "";
 import Field from "../components/Field";
 
 const Profile = ({ token }) => {
