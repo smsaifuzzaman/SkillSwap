@@ -1,0 +1,20 @@
+{
+  "name": "skillswap",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SkillSwap MERN starter with authentication and a demo landing page.",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c magenta,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
+    "server": "npm run dev -w server",
+    "client": "npm run dev -w client",
+    "build": "npm run build -w client",
+    "start": "npm start -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
