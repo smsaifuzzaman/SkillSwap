@@ -421,7 +421,14 @@ function SessionSchedulingPage({ user, token, draft, onDraftApplied }) {
                     <option>Cancelled</option>
                   </select>
                 ) : (
-                  <span className="status-pill">{session.status}</span>
+                  <span 
+                    className={`status-pill ${
+                       session.status === "Accepted" ? "accepted" : ""
+                    }`}
+                  >
+                    {session.status}
+                  </span>
+                
                 )}
               </div>
 
