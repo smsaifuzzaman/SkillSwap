@@ -2,6 +2,7 @@ const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 async function requestJSON(path, options = {}) {
   const { headers, ...restOptions } = options;
+
   const response = await fetch(`${API_URL}${path}`, {
     ...restOptions,
     headers: {
@@ -18,6 +19,10 @@ async function requestJSON(path, options = {}) {
 
   return data;
 }
+
+// ----------------------------------------------------
+// SKILLS
+// ----------------------------------------------------
 
 export function getSkills(token) {
   return requestJSON("/skills", {
@@ -62,18 +67,12 @@ export function deleteSkill(token, id) {
   });
 }
 
-export function boostSkillListing(token, skillId, amount = 5.0) {
-  return requestJSON(`/skills/${skillId}/boost`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({ amount })
-  });
-}
+// ----------------------------------------------------
+// FEATURE 1: FEATURED LISTING & SKILL BOOST
+// ----------------------------------------------------
 
-export function renewSkillListingBoost(token, skillId) {
-  return requestJSON(`/skills/${skillId}/renew-boost`, {
+export function boostSkillListing(token, skillId) {
+  return requestJSON(`/boosts/${skillId}/activate`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`
@@ -81,7 +80,27 @@ export function renewSkillListingBoost(token, skillId) {
   });
 }
 
+export function renewSkillListingBoost(token, skillId) {
+  return requestJSON(`/boosts/${skillId}/renew`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+export function getMyBoostTransactions(token) {
+  return requestJSON("/boosts/transactions/me", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+// ----------------------------------------------------
+// FEATURED MARKETPLACE
+// ----------------------------------------------------
+
 export function getFeaturedSkills() {
   return requestJSON("/skills/featured");
 }
-
