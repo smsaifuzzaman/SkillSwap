@@ -1202,6 +1202,294 @@ h1 {
   background: rgba(238, 119, 85, 0.12);
 }
 
+.achievements-page {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+}
+
+.achievement-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.achievement-summary-grid .portfolio-stat {
+  min-height: 7rem;
+  padding: 0.85rem 1rem;
+}
+
+.achievement-summary-grid .portfolio-stat strong {
+  font-size: 2rem;
+}
+.earned-badge-stat {
+  width: 10rem;
+  height: 10rem;
+  min-height: 0;
+  justify-self: end;
+  align-self: center;
+  place-content: center;
+  padding: 1rem;
+  border-radius: 50%;
+  text-align: center;
+}
+
+.earned-badge-stat svg {
+  margin: 0 auto 0.2rem;
+}
+
+.earned-badge-stat strong {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.earned-badge-stat span {
+  font-size: 0.78rem;
+}
+.achievement-section {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: rgba(18, 14, 40, 0.72);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+}
+
+.achievement-section .feed-heading {
+  margin-bottom: 0.85rem;
+}
+
+.achievement-section .feed-heading h2 {
+  font-size: 1.35rem;
+}
+
+.achievement-section .feed-heading span {
+  color: var(--cream);
+  font-weight: 900;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.achievement-badge-card {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  min-height: 11.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.achievement-badge-card:hover {
+  transform: translateY(-2px);
+}
+
+.achievement-badge-card.earned {
+  border-color: rgba(99, 230, 165, 0.42);
+  background: linear-gradient(
+    145deg,
+    rgba(99, 230, 165, 0.07),
+    rgba(83, 73, 194, 0.07)
+  );
+}
+
+.achievement-badge-card.locked {
+  opacity: 0.78;
+}
+
+.achievement-badge-icon {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  place-items: center;
+  border: 1px solid rgba(242, 195, 130, 0.3);
+  border-radius: 0.75rem;
+  color: var(--cream);
+  background: rgba(242, 195, 130, 0.07);
+}
+
+.achievement-badge-card.earned .achievement-badge-icon {
+  color: #63e6a5;
+  border-color: rgba(99, 230, 165, 0.4);
+  background: rgba(99, 230, 165, 0.09);
+}
+
+.achievement-badge-card .match-label {
+  font-size: 0.7rem;
+}
+
+.achievement-badge-card h3 {
+  margin: 0.15rem 0;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.achievement-badge-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.achievement-earned-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  margin-top: auto;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  color: #63e6a5;
+  background: rgba(99, 230, 165, 0.1);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.certificate-premium-note {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(242, 195, 130, 0.32);
+  border-radius: 0.8rem;
+  background: rgba(242, 195, 130, 0.06);
+}
+
+.certificate-premium-note svg {
+  flex: 0 0 auto;
+  color: var(--cream);
+}
+
+.certificate-premium-note div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.certificate-premium-note strong {
+  color: var(--cream);
+  font-size: 0.9rem;
+}
+
+.certificate-premium-note span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.certificate-eligible-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.certificate-eligible-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.certificate-eligible-card > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.certificate-eligible-card h3 {
+  margin: 0.15rem 0;
+  font-size: 1.05rem;
+}
+
+.certificate-eligible-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.certificate-eligible-card small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.certificate-generated-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(99, 230, 165, 0.4);
+  border-radius: 999px;
+  color: #63e6a5;
+  background: rgba(99, 230, 165, 0.1);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.certificate-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.certificate-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.certificate-card-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 0.8rem;
+  color: var(--cream);
+  background: rgba(180, 139, 241, 0.11);
+}
+
+.certificate-card h3 {
+  margin: 0.1rem 0;
+  font-size: 1rem;
+}
+
+.certificate-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.certificate-card small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.certificate-card code {
+  display: block;
+  width: fit-content;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  color: var(--cream);
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 940px) {
   .hero {
     grid-template-columns: 1fr;
@@ -1242,9 +1530,36 @@ h1 {
   .progress-create-form {
     position: static;
   }
+    .achievement-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .badge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .certificate-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
+    .badge-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .certificate-eligible-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .certificate-premium-note {
+    align-items: flex-start;
+  }
+
+  .certificate-card {
+    grid-template-columns: 1fr;
+  }
   .site-header {
     align-items: flex-start;
   }

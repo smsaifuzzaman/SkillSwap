@@ -55,6 +55,29 @@ export const memberFeatures = [
   metricLabel: "learning progress"
   },
   {
+  id: "achievements-certificates",
+
+  title: "Achievements & Certificates",
+
+  module: "Module 3",
+
+  eyebrow: "Recognition & Credentials",
+
+  summary:
+    "Earn achievement badges from SkillSwap activity and unlock verified certificates for completed learning paths.",
+
+  bullets: [
+    "Automatic badge evaluation",
+    "Earned and locked badge collection",
+    "Premium certificate eligibility",
+    "Unique certificate verification codes"
+  ],
+
+  metric: "5",
+
+  metricLabel: "achievement badges"
+  },
+  {
     id: "portfolio-showcase",
     title: "Skill Portfolio Showcase",
     module: "Module 3",

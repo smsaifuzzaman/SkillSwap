@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
       enum: ["learner", "team-admin", "system-admin"],
       default: "learner"
     },
+    membershipPlan: {
+      type: String,
+      enum: ["Free", "Premium"],
+      default: "Free"
+    },
 
     // Existing fields
     skillLevel: {
@@ -199,6 +204,7 @@ userSchema.methods.toSafeJSON = function () {
     name: this.name,
     email: this.email,
     role: this.role,
+    membershipPlan: this.membershipPlan,
     skillLevel: this.skillLevel,
     expertise: this.expertise,
     desiredSkills: this.desiredSkills,
