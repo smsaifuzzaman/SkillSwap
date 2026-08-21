@@ -7,7 +7,8 @@ import {
   User,
   BookOpen,
   PlusCircle,
-  Zap
+  Zap,
+  TrendingUp
 } from "lucide-react";
 import React from "react";
 import { memberFeatures } from "../data/memberFeatures.js";
@@ -15,6 +16,7 @@ import { memberFeatures } from "../data/memberFeatures.js";
 const featureIcons = {
   "ai-matching": Sparkles,
   "session-scheduling": CalendarDays,
+  "session-progress": TrendingUp,
   "portfolio-showcase": BriefcaseBusiness,
   "trust-reviews": Star,
 };

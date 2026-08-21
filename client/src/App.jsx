@@ -15,6 +15,7 @@ import PortfolioShowcasePage from "./pages/PortfolioShowcasePage.jsx";
 import Profile from "./pages/Profile";
 import AddSkill from "./pages/AddSkill";
 import MySkills from "./pages/MySkills";
+import SessionProgressPage from "./pages/SessionProgressPage.jsx";
 import SessionSchedulingPage from "./pages/SessionSchedulingPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
@@ -145,6 +146,10 @@ function App() {
             />
           ) : null}
 
+          {view === "session-progress" ? (
+            <SessionProgressPage token={token} />
+          ) : null}
+
           {view === "profile" ? (
             <Profile user={user} token={token} />
           ) : null}
@@ -169,6 +174,7 @@ function App() {
             ![
               "ai-matching",
               "session-scheduling",
+              "session-progress",
               "portfolio-showcase",
               "profile",
               "my-skills",

@@ -32,6 +32,29 @@ export const memberFeatures = [
     metricLabel: "upcoming sessions"
   },
   {
+  id: "session-progress",
+
+  title: "Session Progress",
+
+  module: "Module 2",
+
+  eyebrow: "Progress & Milestones",
+
+  summary:
+    "Track learning milestones and progress across multi-session SkillSwap learning journeys.",
+
+  bullets: [
+    "Milestone creation and completion tracking",
+    "Automatic progress percentage",
+    "Multi-session learning progress",
+    "Shared progress between swap partners"
+  ],
+
+  metric: "0%",
+
+  metricLabel: "learning progress"
+  },
+  {
     id: "portfolio-showcase",
     title: "Skill Portfolio Showcase",
     module: "Module 3",
