@@ -65,3 +65,12 @@ export function deleteSession(token, id) {
     }
   });
 }
+
+export function joinGroupSession(token, id) {
+  return requestJSON(`/sessions/${id}/join`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}

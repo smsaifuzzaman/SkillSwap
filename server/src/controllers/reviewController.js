@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import { Review } from "../models/Review.js";
 import { Session } from "../models/Session.js";
 import { User } from "../models/User.js";
+import { Match } from "../models/Match.js";
+import { createNotification } from "../services/reminderService.js";
 
 function getIdString(value) {
   return value?._id?.toString() || value?.toString() || "";
@@ -15,7 +17,7 @@ async function refreshUserAverageRating(userId) {
   if (!userId) return 0;
   const reviewedUserObjectId = new mongoose.Types.ObjectId(userId);
 
-  const [sessionResults, reviewResults] = await Promise.all([
+  const [sessionResults, reviewResults, user] = await Promise.all([
     Session.aggregate([
       { $unwind: "$ratings" },
       { $match: { "ratings.reviewedUser": reviewedUserObjectId } },
@@ -24,7 +26,8 @@ async function refreshUserAverageRating(userId) {
     Review.aggregate([
       { $match: { reviewedUser: reviewedUserObjectId } },
       { $group: { _id: "$reviewedUser", avgScore: { $avg: "$rating" }, count: { $sum: 1 } } }
-    ])
+    ]),
+    User.findById(reviewedUserObjectId)
   ]);
 
   let avgRating = 0;
@@ -36,8 +39,35 @@ async function refreshUserAverageRating(userId) {
 
   const rounded = Math.round(avgRating * 10) / 10;
 
+  // Compute Trust Score Percentage
+  const [reviewsReceived, sessions] = await Promise.all([
+    Review.find({ reviewedUser: userId }),
+    Session.find({ $or: [{ owner: userId }, { partnerId: userId }] })
+  ]);
+  
+  const reviewsReceivedCount = reviewsReceived.length;
+  const completedSessions = sessions.filter((s) => s.status === "Completed").length;
+  const cancelledSessions = sessions.filter((s) => s.status === "Cancelled").length;
+  const totalDecided = completedSessions + cancelledSessions;
+
+  const ratingScore = reviewsReceivedCount > 0 ? Math.min(100, Math.round((rounded / 5) * 100)) : 80;
+  const reliabilityScore = totalDecided > 0 ? Math.round((completedSessions / totalDecided) * 100) : 85;
+  const volumeScore = Math.min(100, Math.round((reviewsReceivedCount / 4) * 100));
+
+  let authenticityScore = 50;
+  if (user?.bio) authenticityScore += 15;
+  if (user?.location) authenticityScore += 15;
+  if (user?.profilePhoto) authenticityScore += 10;
+  if (user && ((user.teachingSkills?.length > 0) || (user.learningSkills?.length > 0))) {
+    authenticityScore += 10;
+  }
+  authenticityScore = Math.min(100, authenticityScore);
+
+  const overallTrustScore = Math.min(100, Math.max(0, Math.round(ratingScore * 0.4 + reliabilityScore * 0.3 + volumeScore * 0.15 + authenticityScore * 0.15)));
+
   await User.findByIdAndUpdate(reviewedUserObjectId, {
-    rating: rounded
+    rating: rounded,
+    trustScore: overallTrustScore
   });
 
   return rounded;
@@ -131,7 +161,7 @@ export async function getReviews(req, res) {
   try {
     const userId = req.user.id;
 
-    const [reviewsReceived, reviewsGiven, userSessions] = await Promise.all([
+    const [reviewsReceived, reviewsGiven, userSessions, userMatches] = await Promise.all([
       Review.find({ reviewedUser: userId })
         .populate("reviewer", "name email profilePhoto")
         .sort({ createdAt: -1 }),
@@ -144,7 +174,14 @@ export async function getReviews(req, res) {
       })
         .populate("owner", "name email profilePhoto")
         .populate("partnerId", "name email profilePhoto")
-        .sort({ scheduledFor: -1 })
+        .sort({ scheduledFor: -1 }),
+      Match.find({
+        $or: [{ requester: userId }, { recipient: userId }],
+        status: "accepted"
+      })
+        .populate("requester", "name email profilePhoto")
+        .populate("recipient", "name email profilePhoto")
+        .sort({ updatedAt: -1 })
     ]);
 
     const eligibleSessions = userSessions.map((session) => {
@@ -197,10 +234,60 @@ export async function getReviews(req, res) {
       };
     });
 
+    const eligibleMatches = userMatches.map((match) => {
+      const isRequester = getIdString(match.requester) === userId;
+      const partner = isRequester ? match.recipient : match.requester;
+      const partnerName = partner?.name || "Partner";
+      const partnerId = getIdString(partner);
+
+      const existingReview = reviewsGiven.find(
+        (rev) => !rev.session && getIdString(rev.reviewedUser) === partnerId
+      );
+
+      const receivedPartnerReview = reviewsReceived.find(
+        (rev) => !rev.session && getIdString(rev.reviewer) === partnerId
+      );
+
+      return {
+        sessionId: `match-${match._id}`, // Fake sessionId so frontend doesn't crash
+        isMatch: true,
+        skillName: "General Skill Swap",
+        partnerId,
+        partnerName,
+        partnerEmail: partner?.email || "",
+        partnerPhoto: partner?.profilePhoto || "",
+        scheduledFor: match.updatedAt,
+        durationMinutes: 0,
+        format: "Online",
+        location: "",
+        status: "Completed", // Treat accepted matches as completed so they can be reviewed
+        userRole: "Peer",
+        isTeacher: false,
+        confirmedFromTeachingSide: true,
+        existingReview: existingReview
+          ? {
+              id: existingReview._id,
+              rating: existingReview.rating,
+              comment: existingReview.comment || "",
+              createdAt: existingReview.createdAt,
+              updatedAt: existingReview.updatedAt
+            }
+          : null,
+        receivedPartnerReview: receivedPartnerReview
+          ? {
+              id: receivedPartnerReview._id,
+              rating: receivedPartnerReview.rating,
+              comment: receivedPartnerReview.comment || "",
+              createdAt: receivedPartnerReview.createdAt
+            }
+          : null
+      };
+    });
+
     res.json({
       reviewsReceived,
       reviewsGiven,
-      eligibleSessions
+      eligibleSessions: [...eligibleMatches, ...eligibleSessions]
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -226,9 +313,12 @@ export async function createOrUpdateReview(req, res) {
     let targetSkill = skillName || "Skill Swap";
     let role = "Peer";
 
-    if (sessionId) {
+    const isMatchReview = sessionId && sessionId.toString().startsWith("match-");
+    const actualSessionId = isMatchReview ? null : sessionId;
+
+    if (actualSessionId) {
       session = await Session.findOne({
-        _id: sessionId,
+        _id: actualSessionId,
         $or: [{ owner: req.user.id }, { partnerId: req.user.id }]
       });
 
@@ -288,10 +378,10 @@ export async function createOrUpdateReview(req, res) {
     const review = await Review.findOneAndUpdate(
       {
         reviewer: req.user.id,
-        ...(sessionId ? { session: sessionId } : { reviewedUser: targetUserId })
+        ...(actualSessionId ? { session: actualSessionId } : { reviewedUser: targetUserId })
       },
       {
-        session: sessionId || null,
+        session: actualSessionId || null,
         reviewer: req.user.id,
         reviewedUser: targetUserId,
         skillName: targetSkill,
@@ -306,6 +396,14 @@ export async function createOrUpdateReview(req, res) {
       .populate("reviewedUser", "name email profilePhoto");
 
     await refreshUserAverageRating(targetUserId);
+
+    await createNotification(
+      targetUserId,
+      "trust_score",
+      "New Review Received",
+      `${req.user.name || "A peer"} just left a ${score}-star review for your session.`,
+      review._id
+    );
 
     res.status(201).json({
       message: "Review and rating submitted successfully.",

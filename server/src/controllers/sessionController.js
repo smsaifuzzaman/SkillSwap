@@ -1,6 +1,7 @@
 import { Session } from "../models/Session.js";
 import { User } from "../models/User.js";
 import { Review } from "../models/Review.js";
+import { createNotification } from "../services/reminderService.js";
 import mongoose from "mongoose";
 
 function addMinutes(date, minutes) {
@@ -133,8 +134,12 @@ export async function createSession(req, res) {
     const session = await Session.create({
       owner: req.user.id,
       skillName: req.body.skillName,
-      partnerName: req.body.partnerName,
+      partnerName: req.body.isGroup ? "Team Members" : req.body.partnerName,
       partnerId: req.body.partnerId || null,
+      isGroup: req.body.isGroup || false,
+      teamId: req.body.teamId || null,
+      maxParticipants: req.body.maxParticipants || 10,
+      participants: req.body.isGroup ? [req.user.id] : [],
       scheduledFor,
       durationMinutes: req.body.durationMinutes,
       format: req.body.format,
@@ -142,8 +147,19 @@ export async function createSession(req, res) {
       location: req.body.location,
       reminderEmail: req.body.reminderEmail,
       notes: req.body.notes,
-      preferenceNotes: req.body.preferenceNotes
+      preferenceNotes: req.body.preferenceNotes,
+      status: req.body.isGroup ? "Accepted" : "Pending" // Group swaps are auto-accepted
     });
+
+    if (session.partnerId) {
+      await createNotification(
+        session.partnerId,
+        "match",
+        "New Session Request",
+        `${req.user.name || "Someone"} has requested a ${req.body.skillName} session with you.`,
+        session._id
+      );
+    }
 
     res.status(201).json({
       session: serializeSession(session, req.user.id),
@@ -388,5 +404,40 @@ export async function deleteSession(req, res) {
     res.status(400).json({
       message: error.message
     });
+  }
+}
+
+// Join a Group Session
+export async function joinGroupSession(req, res) {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    if (!session.isGroup) {
+      return res.status(400).json({ message: "This is not a group session." });
+    }
+
+    // Check if team member
+    const user = await User.findById(req.user.id);
+    if (session.teamId && String(session.teamId) !== String(user.team)) {
+      return res.status(403).json({ message: "You must be in the team to join this group swap." });
+    }
+
+    if (session.participants.includes(req.user.id)) {
+      return res.status(400).json({ message: "You have already joined this session." });
+    }
+
+    if (session.participants.length >= session.maxParticipants) {
+      return res.status(400).json({ message: "This session is full." });
+    }
+
+    session.participants.push(req.user.id);
+    await session.save();
+
+    res.json({ message: "Successfully joined the group session!", session });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 }

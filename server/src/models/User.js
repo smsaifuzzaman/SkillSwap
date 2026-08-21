@@ -38,6 +38,12 @@ const userSchema = new mongoose.Schema(
       default: "Free"
     },
 
+    team: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null
+    },
+
     // Existing fields
     skillLevel: {
       type: String,
@@ -95,6 +101,13 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
       max: 5
+    },
+
+    trustScore: {
+      type: Number,
+      default: 50,
+      min: 0,
+      max: 100
     },
 
     // Total completed swaps
@@ -216,6 +229,7 @@ userSchema.methods.toSafeJSON = function () {
     availability: this.availability,
     preferredFormat: this.preferredFormat,
     rating: this.rating,
+    trustScore: this.trustScore,
     totalSwaps: this.totalSwaps,
     swapHistory: this.swapHistory,
     createdAt: this.createdAt,

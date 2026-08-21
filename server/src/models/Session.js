@@ -28,6 +28,29 @@ const sessionSchema = new mongoose.Schema(
       default: null
     },
 
+    isGroup: {
+      type: Boolean,
+      default: false
+    },
+
+    teamId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null
+    },
+
+    participants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+    ],
+
+    maxParticipants: {
+      type: Number,
+      default: 10
+    },
+
     scheduledFor: {
       type: Date,
       required: [true, "Session date and time are required"]

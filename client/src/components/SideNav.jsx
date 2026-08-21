@@ -10,7 +10,9 @@ import {
   Zap,
   TrendingUp,
   Award,
-  FolderLock 
+  FolderLock,
+  Users,
+  Search
 } from "lucide-react";
 import React from "react";
 import { memberFeatures } from "../data/memberFeatures.js";
@@ -60,6 +62,32 @@ function SideNav({ view, setView }) {
       >
         <BookOpen size={19} />
         My Skills
+      </button>
+
+      <button
+        className={`side-nav-item ${view === "trust-reviews" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("trust-reviews")}
+      >
+        <Star size={19} />
+        Trust & Reviews
+      </button>
+      <button
+        className={`side-nav-item ${view === "team" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("team")}
+      >
+        <Users size={19} />
+        Team Workspace
+      </button>
+
+      <button
+        className={`side-nav-item ${view === "community-search" ? "active" : ""}`}
+        type="button"
+        onClick={() => setView("community-search")}
+      >
+        <Search size={19} />
+        Community Search
       </button>
 
       <button
