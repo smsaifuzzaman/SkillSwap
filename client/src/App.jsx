@@ -17,6 +17,7 @@ import AddSkill from "./pages/AddSkill";
 import MySkills from "./pages/MySkills";
 import SessionProgressPage from "./pages/SessionProgressPage.jsx";
 import SessionSchedulingPage from "./pages/SessionSchedulingPage.jsx";
+import AchievementsPage from "./pages/AchievementsPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
 
@@ -150,6 +151,10 @@ function App() {
             <SessionProgressPage token={token} />
           ) : null}
 
+          {view === "achievements-certificates" ? (
+            <AchievementsPage token={token} />
+          ) : null}
+
           {view === "profile" ? (
             <Profile user={user} token={token} />
           ) : null}
@@ -175,6 +180,7 @@ function App() {
               "ai-matching",
               "session-scheduling",
               "session-progress",
+              "achievements-certificates",
               "portfolio-showcase",
               "profile",
               "my-skills",
