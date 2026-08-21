@@ -85,11 +85,50 @@ const sessionSchema = new mongoose.Schema(
       type: String,
       enum: ["Pending", "Accepted", "Change Requested", "Completed", "Cancelled"],
       default: "Pending"
-    }
+    },
+
+    ratings: [
+      {
+        reviewer: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        reviewedUser: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        score: {
+          type: Number,
+          required: true,
+          min: [0.5, "Rating must be at least 0.5 stars"],
+          max: [5, "Rating cannot be more than 5 stars"]
+        },
+        comment: {
+          type: String,
+          trim: true,
+          default: "",
+          maxlength: [1000, "Review comment cannot exceed 1000 characters"]
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }
+    ]
   },
   {
     timestamps: true
   }
 );
+
+sessionSchema.path("ratings").schema.path("score").validate(function validateHalfStar(value) {
+  return Number.isFinite(value) && value * 2 === Math.round(value * 2);
+}, "Rating must use half-star increments.");
 
 export const Session = mongoose.model("Session", sessionSchema);

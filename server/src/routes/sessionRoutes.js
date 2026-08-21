@@ -3,6 +3,7 @@ import {
   createSession,
   deleteSession,
   getSessions,
+  rateSessionPartner,
   updateSessionStatus
 } from "../controllers/sessionController.js";
 import { protect } from "../middleware/auth.js";
@@ -12,6 +13,7 @@ const router = express.Router();
 router.get("/", protect, getSessions);
 router.post("/", protect, createSession);
 router.patch("/:id/status", protect, updateSessionStatus);
+router.patch("/:id/rating", protect, rateSessionPartner);
 router.delete("/:id", protect, deleteSession);
 
 export default router;

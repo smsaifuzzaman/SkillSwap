@@ -122,14 +122,14 @@ export const memberFeatures = [
     module: "Module 4",
     eyebrow: "Reputation System",
     summary:
-      "A future trust area for collecting peer reviews and calculating reputation scores.",
+      "Collect verified peer ratings and written reviews from confirmed sessions, with dynamic trust score calculation.",
     bullets: [
-      "Post-session rating flow",
-      "Written review placeholders",
-      "Trust score calculation preview",
-      "Review history summary"
+      "Confirmed session rating and review flow",
+      "Interactive star ratings & written peer feedback",
+      "Multi-factor dynamic trust score algorithm",
+      "Public reviews received and given histories"
     ],
-    metric: "4.8",
-    metricLabel: "sample trust score"
+    metric: "95%",
+    metricLabel: "community trust score"
   }
 ];

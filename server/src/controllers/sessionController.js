@@ -1,4 +1,7 @@
 import { Session } from "../models/Session.js";
+import { User } from "../models/User.js";
+import { Review } from "../models/Review.js";
+import mongoose from "mongoose";
 
 function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60 * 1000);
@@ -45,6 +48,8 @@ function serializeSession(session, viewerId) {
   const ownerId = getIdString(session.owner);
   const partnerId = getIdString(session.partnerId);
   const viewerRole = viewerId === partnerId ? "recipient" : "requester";
+  const viewerRating = session.ratings?.find((rating) => getIdString(rating.reviewer) === viewerId);
+  const receivedRating = session.ratings?.find((rating) => getIdString(rating.reviewedUser) === viewerId);
 
   return {
     id: session._id,
@@ -63,10 +68,56 @@ function serializeSession(session, viewerId) {
     preferenceNotes: session.preferenceNotes,
     status,
     viewerRole,
+    viewerRating: viewerRating
+      ? {
+          score: viewerRating.score,
+          comment: viewerRating.comment || "",
+          updatedAt: viewerRating.updatedAt || viewerRating.createdAt
+        }
+      : null,
+    receivedRating: receivedRating
+      ? {
+          score: receivedRating.score,
+          comment: receivedRating.comment || "",
+          updatedAt: receivedRating.updatedAt || receivedRating.createdAt
+        }
+      : null,
     googleCalendarUrl: buildGoogleCalendarUrl(session),
     createdAt: session.createdAt,
     updatedAt: session.updatedAt
   };
+}
+
+function isHalfStarRating(value) {
+  return Number.isFinite(value) && value >= 0.5 && value <= 5 && value * 2 === Math.round(value * 2);
+}
+
+async function refreshUserAverageRating(userId) {
+  const reviewedUserObjectId = new mongoose.Types.ObjectId(userId);
+  const results = await Session.aggregate([
+    {
+      $unwind: "$ratings"
+    },
+    {
+      $match: {
+        "ratings.reviewedUser": reviewedUserObjectId
+      }
+    },
+    {
+      $group: {
+        _id: "$ratings.reviewedUser",
+        averageRating: {
+          $avg: "$ratings.score"
+        }
+      }
+    }
+  ]);
+
+  const averageRating = results[0]?.averageRating || 0;
+
+  await User.findByIdAndUpdate(reviewedUserObjectId, {
+    rating: Math.round(averageRating * 10) / 10
+  });
 }
 
 export async function createSession(req, res) {
@@ -195,6 +246,120 @@ export async function updateSessionStatus(req, res) {
 
     res.json({
       session: serializeSession(session, req.user.id)
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message
+    });
+  }
+}
+
+export async function rateSessionPartner(req, res) {
+  try {
+    const score = Number(req.body.score);
+
+    if (!isHalfStarRating(score)) {
+      return res.status(400).json({
+        message: "Rating must be between 0.5 and 5 in half-star increments."
+      });
+    }
+
+    const existingSession = await Session.findOne({
+      _id: req.params.id,
+      $or: [
+        {
+          owner: req.user.id
+        },
+        {
+          partnerId: req.user.id
+        }
+      ]
+    });
+
+    if (!existingSession) {
+      return res.status(404).json({
+        message: "Session not found."
+      });
+    }
+
+    if (!["Accepted", "Completed", "Scheduled"].includes(existingSession.status)) {
+      return res.status(400).json({
+        message: "You can rate after the requested session is accepted."
+      });
+    }
+
+    const ownerId = getIdString(existingSession.owner);
+    const partnerId = getIdString(existingSession.partnerId);
+    const isRequester = ownerId === req.user.id;
+    const isRecipient = partnerId === req.user.id;
+
+    if (!isRequester && !isRecipient) {
+      return res.status(403).json({
+        message: "You do not have permission to rate this session."
+      });
+    }
+
+    const reviewedUserId = isRequester ? partnerId : ownerId;
+
+    if (!reviewedUserId) {
+      return res.status(400).json({
+        message: "This session does not have a registered partner to rate."
+      });
+    }
+
+    const now = new Date();
+    const comment = typeof req.body.comment === "string" ? req.body.comment.trim() : undefined;
+    const existingRating = existingSession.ratings.find(
+      (rating) => getIdString(rating.reviewer) === req.user.id
+    );
+
+    if (existingRating) {
+      existingRating.score = score;
+      if (comment !== undefined) {
+        existingRating.comment = comment;
+      }
+      existingRating.reviewedUser = reviewedUserId;
+      existingRating.updatedAt = now;
+    } else {
+      existingSession.ratings.push({
+        reviewer: req.user.id,
+        reviewedUser: reviewedUserId,
+        score,
+        comment: comment !== undefined ? comment : "",
+        createdAt: now,
+        updatedAt: now
+      });
+    }
+
+    await existingSession.save();
+    await refreshUserAverageRating(reviewedUserId);
+
+    // Sync with Review model
+    await Review.findOneAndUpdate(
+      {
+        session: existingSession._id,
+        reviewer: req.user.id
+      },
+      {
+        session: existingSession._id,
+        reviewer: req.user.id,
+        reviewedUser: reviewedUserId,
+        skillName: existingSession.skillName,
+        rating: score,
+        comment: comment !== undefined ? comment : (existingRating?.comment || ""),
+        role: isRecipient ? "Teacher" : "Learner",
+        updatedAt: now
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    const session = await Session.findById(req.params.id)
+      .populate("owner", "name email")
+      .populate("partnerId", "name email");
+
+    res.json({
+      session: serializeSession(session, req.user.id),
+      message: "Rating saved."
     });
   } catch (error) {
     res.status(400).json({

@@ -19,6 +19,7 @@ import SessionProgressPage from "./pages/SessionProgressPage.jsx";
 import SessionSchedulingPage from "./pages/SessionSchedulingPage.jsx";
 import AchievementsPage from "./pages/AchievementsPage.jsx";
 import ResourceVaultPage from "./pages/ResourceVaultPage.jsx";
+import TrustReviewsPage from "./pages/TrustReviewsPage.jsx";
 
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
@@ -161,6 +162,10 @@ function App() {
             <ResourceVaultPage token={token} />
           ) : null}
 
+          {view === "trust-reviews" ? (
+            <TrustReviewsPage user={user} token={token} />
+          ) : null}
+
           {view === "profile" ? (
             <Profile user={user} token={token} />
           ) : null}
@@ -188,6 +193,7 @@ function App() {
               "session-progress",
               "achievements-certificates",
               "resource-vault",
+              "trust-reviews",
               "portfolio-showcase",
               "profile",
               "my-skills",

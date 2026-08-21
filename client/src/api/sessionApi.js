@@ -47,6 +47,16 @@ export function updateSessionStatus(token, id, status, preferenceNotes = "") {
   });
 }
 
+export function rateSessionPartner(token, id, score, comment = "") {
+  return requestJSON(`/sessions/${id}/rating`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({ score, comment })
+  });
+}
+
 export function deleteSession(token, id) {
   return requestJSON(`/sessions/${id}`, {
     method: "DELETE",
