@@ -20,12 +20,19 @@ import SessionSchedulingPage from "./pages/SessionSchedulingPage.jsx";
 import AchievementsPage from "./pages/AchievementsPage.jsx";
 import ResourceVaultPage from "./pages/ResourceVaultPage.jsx";
 import TrustReviewsPage from "./pages/TrustReviewsPage.jsx";
+import NotificationsPage from "./pages/NotificationsPage.jsx";
+import TeamWorkspacePage from "./pages/TeamWorkspacePage.jsx";
+import CommunitySearchPage from "./pages/CommunitySearchPage.jsx";
+import PublicProfilePage from "./pages/PublicProfilePage.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
+import InboxPage from "./pages/InboxPage.jsx";
 
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
 
 function App() {
   const [view, setView] = useState("landing");
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("skillswap_token"));
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -118,7 +125,7 @@ function App() {
   return (
     <div className="app-shell">
       <div className="background-grid" />
-      <Header user={user} initials={initials} setView={setView} onLogout={handleLogout} />
+      <Header user={user} token={token} initials={initials} setView={setView} onLogout={handleLogout} />
       <Toast status={status} />
 
       <main className={user ? "app-main with-sidebar" : "app-main"}>
@@ -164,6 +171,30 @@ function App() {
 
           {view === "trust-reviews" ? (
             <TrustReviewsPage user={user} token={token} />
+          ) : null}
+
+          {view === "notifications" ? (
+            <NotificationsPage token={token} />
+          ) : null}
+
+          {view === "team" ? (
+            <TeamWorkspacePage user={user} token={token} setView={setView} />
+          ) : null}
+
+          {view === "community-search" ? (
+            <CommunitySearchPage user={user} token={token} setView={setView} setSelectedUserId={setSelectedUserId} />
+          ) : null}
+
+          {view === "public-profile" ? (
+            <PublicProfilePage token={token} userId={selectedUserId} setView={setView} />
+          ) : null}
+
+          {view === "chat" ? (
+            <ChatPage user={user} token={token} selectedUserId={selectedUserId} setView={setView} />
+          ) : null}
+
+          {view === "inbox" ? (
+            <InboxPage user={user} token={token} setView={setView} setSelectedUserId={setSelectedUserId} />
           ) : null}
 
           {view === "profile" ? (

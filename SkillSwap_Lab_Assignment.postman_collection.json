@@ -1,0 +1,129 @@
+{
+	"info": {
+		"name": "SkillSwap Lab Assignment (Ready to Run)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth - Signup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Aquib\",\n    \"email\": \"aquib@example.com\",\n    \"password\": \"password123\",\n    \"skillLevel\": \"Beginner\",\n    \"expertise\": [\"HTML\", \"CSS\"],\n    \"desiredSkills\": [\"React\"]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:1321/api/auth/signup",
+					"protocol": "http",
+					"host": ["127", "0", "0", "1"],
+					"port": "1321",
+					"path": ["api", "auth", "signup"]
+				}
+			}
+		},
+		{
+			"name": "Feature 1 - Get Profile",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgwODc5NTIxMDcwNzIwZDA1Y2FiM2YiLCJyb2xlIjoibGVhcm5lciIsImlhdCI6MTc4NjgwODIxMywiZXhwIjoxNzg3NDEzMDEzfQ.4iTIZTPRkI6SEDcabIcUccJj9HCkKsb3LU4r2g2sevM",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:1321/api/profile",
+					"protocol": "http",
+					"host": ["127", "0", "0", "1"],
+					"port": "1321",
+					"path": ["api", "profile"]
+				}
+			}
+		},
+		{
+			"name": "Feature 1 - Update Profile",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgwODc5NTIxMDcwNzIwZDA1Y2FiM2YiLCJyb2xlIjoibGVhcm5lciIsImlhdCI6MTc4NjgwODIxMywiZXhwIjoxNzg3NDEzMDEzfQ.4iTIZTPRkI6SEDcabIcUccJj9HCkKsb3LU4r2g2sevM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Aquib Updated\",\n    \"bio\": \"I am a passionate software developer looking to learn new skills.\",\n    \"location\": \"Dhaka, Bangladesh\",\n    \"availability\": \"Weekends\",\n    \"preferredFormat\": \"Online\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:1321/api/profile",
+					"protocol": "http",
+					"host": ["127", "0", "0", "1"],
+					"port": "1321",
+					"path": ["api", "profile"]
+				}
+			}
+		},
+		{
+			"name": "Feature 1 - Add Skill",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgwODc5NTIxMDcwNzIwZDA1Y2FiM2YiLCJyb2xlIjoibGVhcm5lciIsImlhdCI6MTc4NjgwODIxMywiZXhwIjoxNzg3NDEzMDEzfQ.4iTIZTPRkI6SEDcabIcUccJj9HCkKsb3LU4r2g2sevM",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"skillName\": \"ReactJS\",\n    \"type\": \"teach\",\n    \"proficiency\": \"Advanced\",\n    \"sessionDuration\": 60,\n    \"preferredFormat\": \"Online\",\n    \"description\": \"I can teach you advanced React concepts.\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:1321/api/skills",
+					"protocol": "http",
+					"host": ["127", "0", "0", "1"],
+					"port": "1321",
+					"path": ["api", "skills"]
+				}
+			}
+		},
+		{
+			"name": "Feature 2 - Get Matches",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YTgwODc5NTIxMDcwNzIwZDA1Y2FiM2YiLCJyb2xlIjoibGVhcm5lciIsImlhdCI6MTc4NjgwODIxMywiZXhwIjoxNzg3NDEzMDEzfQ.4iTIZTPRkI6SEDcabIcUccJj9HCkKsb3LU4r2g2sevM",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:1321/api/skills/match",
+					"protocol": "http",
+					"host": ["127", "0", "0", "1"],
+					"port": "1321",
+					"path": ["api", "skills", "match"]
+				}
+			}
+		}
+	]
+}

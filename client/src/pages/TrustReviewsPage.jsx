@@ -314,8 +314,8 @@ function TrustReviewsPage({ user, token }) {
           <p className="eyebrow">Reputation & Peer Reviews</p>
           <h1>Trust Score & Reviews</h1>
           <p>
-            Build reputation through confirmed skill exchanges. When a session is confirmed
-            from the teaching side, rate your partner and write reviews to grow community trust.
+            Build reputation through confirmed skill exchanges. When a session or match is confirmed,
+            rate your partner and write reviews to grow community trust.
           </p>
         </div>
 
@@ -380,7 +380,7 @@ function TrustReviewsPage({ user, token }) {
           onClick={() => setActiveTab("sessions")}
         >
           <PenLine size={17} />
-          Rate Confirmed Sessions
+          Rate Confirmed Matches & Sessions
           {pendingReviewCount > 0 ? (
             <span className="tab-counter-badge">{pendingReviewCount}</span>
           ) : null}

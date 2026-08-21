@@ -12,6 +12,11 @@ import progressRoutes from "./routes/progressRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
 import vaultRoutes from "./routes/vaultRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import teamRoutes from "./routes/teamRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import matchRoutes from "./routes/matchRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -42,6 +47,11 @@ app.use("/api/progress", progressRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/vault", vaultRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/matches", matchRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
