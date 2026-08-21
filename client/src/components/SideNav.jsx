@@ -9,7 +9,8 @@ import {
   PlusCircle,
   Zap,
   TrendingUp,
-  Award 
+  Award,
+  FolderLock 
 } from "lucide-react";
 import React from "react";
 import { memberFeatures } from "../data/memberFeatures.js";
@@ -19,6 +20,7 @@ const featureIcons = {
   "session-scheduling": CalendarDays,
   "session-progress": TrendingUp,
   "achievements-certificates": Award,
+  "resource-vault": FolderLock,
   "portfolio-showcase": BriefcaseBusiness,
   "trust-reviews": Star,
 };

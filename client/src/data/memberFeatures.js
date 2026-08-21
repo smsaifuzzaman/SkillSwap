@@ -78,6 +78,29 @@ export const memberFeatures = [
   metricLabel: "achievement badges"
   },
   {
+  id: "resource-vault",
+
+  title: "Resource Vault",
+
+  module: "Module 4",
+
+  eyebrow: "Private Resource Storage",
+
+  summary:
+    "Store and manage private notes, learning materials, certificates, and portfolio files.",
+
+  bullets: [
+    "Private file uploads",
+    "Resource categories",
+    "Search and filtering",
+    "Open, download, and delete resources"
+  ],
+
+  metric: "Private",
+
+  metricLabel: "personal storage"
+  },
+  {
     id: "portfolio-showcase",
     title: "Skill Portfolio Showcase",
     module: "Module 3",
