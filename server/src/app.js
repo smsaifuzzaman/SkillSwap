@@ -10,6 +10,7 @@ import sessionRoutes from "./routes/sessionRoutes.js";
 import boostRoutes from "./routes/boostRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
+import vaultRoutes from "./routes/vaultRoutes.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -38,6 +39,7 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/boosts", boostRoutes);
 app.use("/api/progress", progressRoutes);
 app.use("/api/achievements", achievementRoutes);
+app.use("/api/vault", vaultRoutes);
 app.use(notFound);
 app.use(errorHandler);
 

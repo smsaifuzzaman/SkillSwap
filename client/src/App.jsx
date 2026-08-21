@@ -18,6 +18,8 @@ import MySkills from "./pages/MySkills";
 import SessionProgressPage from "./pages/SessionProgressPage.jsx";
 import SessionSchedulingPage from "./pages/SessionSchedulingPage.jsx";
 import AchievementsPage from "./pages/AchievementsPage.jsx";
+import ResourceVaultPage from "./pages/ResourceVaultPage.jsx";
+
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
 
@@ -155,6 +157,10 @@ function App() {
             <AchievementsPage token={token} />
           ) : null}
 
+          {view === "resource-vault" ? (
+            <ResourceVaultPage token={token} />
+          ) : null}
+
           {view === "profile" ? (
             <Profile user={user} token={token} />
           ) : null}
@@ -181,6 +187,7 @@ function App() {
               "session-scheduling",
               "session-progress",
               "achievements-certificates",
+              "resource-vault",
               "portfolio-showcase",
               "profile",
               "my-skills",
