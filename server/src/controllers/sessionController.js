@@ -2,46 +2,14 @@ import { Session } from "../models/Session.js";
 import { User } from "../models/User.js";
 import { Review } from "../models/Review.js";
 import { createNotification } from "../services/reminderService.js";
+import {
+  isGoogleCalendarConfigured,
+  upsertSessionCalendarEvent
+} from "../services/googleCalendarService.js";
 import mongoose from "mongoose";
-
-function addMinutes(date, minutes) {
-  return new Date(date.getTime() + minutes * 60 * 1000);
-}
-
-function formatGoogleDate(date) {
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-}
 
 function getIdString(value) {
   return value?._id?.toString() || value?.toString() || "";
-}
-
-function buildGoogleCalendarUrl(session) {
-  const start = new Date(session.scheduledFor);
-  const end = addMinutes(start, session.durationMinutes || 60);
-  const details = [
-    `SkillSwap session with ${session.partnerName}.`,
-    session.meetingLink ? `Meeting link: ${session.meetingLink}` : "",
-    session.notes ? `Notes: ${session.notes}` : ""
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: `SkillSwap: ${session.skillName}`,
-    dates: `${formatGoogleDate(start)}/${formatGoogleDate(end)}`,
-    details,
-    add: session.reminderEmail
-  });
-
-  const location = session.meetingLink || session.location;
-
-  if (location) {
-    params.set("location", location);
-  }
-
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 function serializeSession(session, viewerId) {
@@ -83,10 +51,47 @@ function serializeSession(session, viewerId) {
           updatedAt: receivedRating.updatedAt || receivedRating.createdAt
         }
       : null,
-    googleCalendarUrl: buildGoogleCalendarUrl(session),
+    googleCalendarEventId: session.googleCalendarEventId,
+    googleCalendarHtmlLink: session.googleCalendarHtmlLink,
+    googleCalendarSyncedAt: session.googleCalendarSyncedAt,
+    googleCalendarSyncStatus: session.googleCalendarSyncStatus,
+    googleCalendarSyncError: session.googleCalendarSyncError,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt
   };
+}
+
+function getStoredCalendarError(error) {
+  const message = error.message || "Google Calendar sync failed.";
+  return message.length > 300 ? `${message.slice(0, 297)}...` : message;
+}
+
+async function syncGoogleCalendarEvent(session) {
+  try {
+    const event = await upsertSessionCalendarEvent(session);
+
+    session.googleCalendarEventId = event.id || session.googleCalendarEventId;
+    session.googleCalendarHtmlLink = event.htmlLink || session.googleCalendarHtmlLink;
+    session.googleCalendarSyncedAt = new Date();
+    session.googleCalendarSyncStatus = "Synced";
+    session.googleCalendarSyncError = "";
+
+    await session.save();
+
+    return {
+      ok: true,
+      event
+    };
+  } catch (error) {
+    session.googleCalendarSyncStatus = "Failed";
+    session.googleCalendarSyncError = getStoredCalendarError(error);
+    await session.save();
+
+    return {
+      ok: false,
+      error
+    };
+  }
 }
 
 function isHalfStarRating(value) {
@@ -131,7 +136,7 @@ export async function createSession(req, res) {
       });
     }
 
-    const session = await Session.create({
+    const createdSession = await Session.create({
       owner: req.user.id,
       skillName: req.body.skillName,
       partnerName: req.body.isGroup ? "Team Members" : req.body.partnerName,
@@ -151,6 +156,10 @@ export async function createSession(req, res) {
       status: req.body.isGroup ? "Accepted" : "Pending" // Group swaps are auto-accepted
     });
 
+    const session = await Session.findById(createdSession._id)
+      .populate("owner", "name email")
+      .populate("partnerId", "name email");
+
     if (session.partnerId) {
       await createNotification(
         session.partnerId,
@@ -161,9 +170,15 @@ export async function createSession(req, res) {
       );
     }
 
+    if (isGoogleCalendarConfigured()) {
+      await syncGoogleCalendarEvent(session);
+    }
+
     res.status(201).json({
       session: serializeSession(session, req.user.id),
-      message: "Session request sent. It stays pending until the other user accepts it."
+      message: isGoogleCalendarConfigured()
+        ? "Session request sent and synced with Google Calendar."
+        : "Session request sent. Google Calendar API credentials are not configured yet."
     });
   } catch (error) {
     res.status(400).json({
@@ -260,8 +275,62 @@ export async function updateSessionStatus(req, res) {
       .populate("owner", "name email")
       .populate("partnerId", "name email");
 
+    if (isGoogleCalendarConfigured()) {
+      await syncGoogleCalendarEvent(session);
+    }
+
     res.json({
       session: serializeSession(session, req.user.id)
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message
+    });
+  }
+}
+
+export async function syncSessionCalendar(req, res) {
+  try {
+    if (!isGoogleCalendarConfigured()) {
+      return res.status(503).json({
+        message:
+          "Google Calendar API is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REFRESH_TOKEN."
+      });
+    }
+
+    const session = await Session.findOne({
+      _id: req.params.id,
+      $or: [
+        {
+          owner: req.user.id
+        },
+        {
+          partnerId: req.user.id
+        }
+      ]
+    })
+      .populate("owner", "name email")
+      .populate("partnerId", "name email");
+
+    if (!session) {
+      return res.status(404).json({
+        message: "Session not found."
+      });
+    }
+
+    const result = await syncGoogleCalendarEvent(session);
+
+    if (!result.ok) {
+      return res.status(502).json({
+        session: serializeSession(session, req.user.id),
+        message: `Google Calendar sync failed: ${result.error.message}`
+      });
+    }
+
+    res.json({
+      session: serializeSession(session, req.user.id),
+      message: "Session synced with Google Calendar.",
+      googleCalendarHtmlLink: session.googleCalendarHtmlLink
     });
   } catch (error) {
     res.status(400).json({

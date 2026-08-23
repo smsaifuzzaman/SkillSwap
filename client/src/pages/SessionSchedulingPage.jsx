@@ -13,6 +13,7 @@ import {
   createSession,
   deleteSession,
   getSessions,
+  syncSessionCalendar,
   updateSessionStatus
 } from "../api/sessionApi.js";
 
@@ -69,6 +70,7 @@ function SessionSchedulingPage({ user, token, draft, onDraftApplied }) {
   const [form, setForm] = useState(() => createInitialForm());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncingCalendarId, setSyncingCalendarId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -201,6 +203,31 @@ function SessionSchedulingPage({ user, token, draft, onDraftApplied }) {
       setSessions((currentSessions) => currentSessions.filter((session) => session.id !== sessionId));
     } catch (err) {
       setError(err.message || "Failed to delete session.");
+    }
+  }
+
+  async function handleCalendarSync(session) {
+    try {
+      setError("");
+      setSuccess("");
+      setSyncingCalendarId(session.id);
+
+      const data = await syncSessionCalendar(token, session.id);
+
+      setSessions((currentSessions) =>
+        currentSessions.map((currentSession) =>
+          currentSession.id === session.id ? data.session : currentSession
+        )
+      );
+      setSuccess(data.message || "Session synced with Google Calendar.");
+
+      if (data.googleCalendarHtmlLink) {
+        window.open(data.googleCalendarHtmlLink, "_blank", "noopener,noreferrer");
+      }
+    } catch (err) {
+      setError(err.message || "Failed to sync with Google Calendar.");
+    } finally {
+      setSyncingCalendarId("");
     }
   }
 
@@ -455,6 +482,12 @@ function SessionSchedulingPage({ user, token, draft, onDraftApplied }) {
 
               {session.notes ? <p>{session.notes}</p> : null}
 
+              <div className="calendar-sync-status">
+                <CalendarPlus size={16} />
+                Google Calendar: {session.googleCalendarSyncStatus || "Not Synced"}
+                {session.googleCalendarSyncError ? ` - ${session.googleCalendarSyncError}` : ""}
+              </div>
+
               <label className="field session-preference-field">
                 <span>Preference or change request</span>
                 <textarea
@@ -470,15 +503,15 @@ function SessionSchedulingPage({ user, token, draft, onDraftApplied }) {
               </label>
 
               <div className="portfolio-actions">
-                <a
+                <button
                   className="primary-button small"
-                  href={session.googleCalendarUrl}
-                  target="_blank"
-                  rel="noreferrer"
+                  type="button"
+                  onClick={() => handleCalendarSync(session)}
+                  disabled={syncingCalendarId === session.id}
                 >
                   <LinkIcon size={16} />
-                  Add to Google Calendar
-                </a>
+                  {syncingCalendarId === session.id ? "Syncing..." : "Sync Google Calendar"}
+                </button>
 
                 {session.viewerRole === "recipient" ? (
                   <button

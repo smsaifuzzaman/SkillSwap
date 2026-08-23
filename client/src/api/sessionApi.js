@@ -47,6 +47,15 @@ export function updateSessionStatus(token, id, status, preferenceNotes = "") {
   });
 }
 
+export function syncSessionCalendar(token, id) {
+  return requestJSON(`/sessions/${id}/calendar-sync`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
 export function rateSessionPartner(token, id, score, comment = "") {
   return requestJSON(`/sessions/${id}/rating`, {
     method: "PATCH",

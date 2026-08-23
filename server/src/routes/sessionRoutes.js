@@ -4,6 +4,7 @@ import {
   deleteSession,
   getSessions,
   rateSessionPartner,
+  syncSessionCalendar,
   updateSessionStatus,
   joinGroupSession
 } from "../controllers/sessionController.js";
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.get("/", protect, getSessions);
 router.post("/", protect, createSession);
+router.post("/:id/calendar-sync", protect, syncSessionCalendar);
 router.patch("/:id/status", protect, updateSessionStatus);
 router.patch("/:id/rating", protect, rateSessionPartner);
 router.delete("/:id", protect, deleteSession);

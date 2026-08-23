@@ -1029,7 +1029,8 @@ h1 {
 
 .session-card-top,
 .session-meta-grid span,
-.session-complete {
+.session-complete,
+.calendar-sync-status {
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -1100,7 +1101,8 @@ h1 {
 }
 
 .session-meta-grid svg,
-.session-complete svg {
+.session-complete svg,
+.calendar-sync-status svg {
   flex: 0 0 auto;
   color: var(--cream);
 }
@@ -1114,6 +1116,18 @@ h1 {
   background: rgba(242, 195, 130, 0.08);
   font-size: 0.85rem;
   font-weight: 900;
+}
+
+.calendar-sync-status {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.65rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.85rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .session-preference-field textarea {

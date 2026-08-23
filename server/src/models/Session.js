@@ -110,6 +110,36 @@ const sessionSchema = new mongoose.Schema(
       default: "Pending"
     },
 
+    googleCalendarEventId: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+
+    googleCalendarHtmlLink: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+
+    googleCalendarSyncedAt: {
+      type: Date,
+      default: null
+    },
+
+    googleCalendarSyncStatus: {
+      type: String,
+      enum: ["Not Synced", "Synced", "Failed"],
+      default: "Not Synced"
+    },
+
+    googleCalendarSyncError: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: [300, "Calendar sync error cannot exceed 300 characters"]
+    },
+
     ratings: [
       {
         reviewer: {
