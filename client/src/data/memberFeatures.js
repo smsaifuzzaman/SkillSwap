@@ -131,5 +131,50 @@ export const memberFeatures = [
     ],
     metric: "95%",
     metricLabel: "community trust score"
+  },
+  {
+    id: "swap-negotiation",
+    title: "Swap Request & Negotiation",
+    module: "Module 1",
+    eyebrow: "Skill Discovery & Matching",
+    summary: "Send, accept, decline, or counter skill-swap requests with full negotiation history.",
+    bullets: [
+      "Create swap requests with offered/requested skills",
+      "Accept, decline, or counter an offer",
+      "Full negotiation history log",
+      "Turn-based negotiation (only the right person can respond)"
+    ],
+    metric: "Live",
+    metricLabel: "negotiation engine"
+  },
+  {
+    id: "dispute-resolution",
+    title: "Dispute Resolution & Moderation",
+    module: "Module 3",
+    eyebrow: "Trust & Safety",
+    summary: "Report issues with a swap partner and let a System Admin review and resolve them.",
+    bullets: [
+      "File a dispute against another user",
+      "Admin review and resolution workflow",
+      "Rating penalty, suspension, or ban actions",
+      "Full audit trail per dispute"
+    ],
+    metric: "Live",
+    metricLabel: "moderation system"
+  },
+  {
+    id: "skill-analytics",
+    title: "Skill Analytics Dashboard",
+    module: "Module 5",
+    eyebrow: "Data & Insights",
+    summary: "Personal learning stats, platform-wide skill demand, and recommendations.",
+    bullets: [
+      "Personal swap/session stats",
+      "Most in-demand skills platform-wide",
+      "Personalized skill recommendations",
+      "Admin engagement trend view"
+    ],
+    metric: "Live",
+    metricLabel: "analytics engine"
   }
 ];
