@@ -1638,6 +1638,74 @@ h1 {
   display: flex;
   gap: 0.55rem;
 }
+.external-resource-section {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: rgba(18, 14, 40, 0.72);
+}
+
+.external-resource-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.external-resource-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+}
+
+.external-resource-search input {
+  min-height: 2.8rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  outline: none;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.external-resource-search input::placeholder {
+  color: var(--muted);
+}
+
+.external-resource-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.external-resource-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.external-resource-card > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.external-resource-card h3 {
+  margin: 0.15rem 0;
+  font-size: 1rem;
+}
+
+.external-resource-card p,
+.external-resource-card small {
+  margin: 0;
+  color: var(--muted);
+}
 
 @media (max-width: 940px) {
   .hero {
@@ -1814,6 +1882,19 @@ h1 {
     right: 1rem;
     bottom: 1rem;
   }
+    .external-resource-search {
+    grid-template-columns: 1fr;
+  }
+
+  .external-resource-results {
+    grid-template-columns: 1fr;
+  }
+
+  .external-resource-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
 }
 /* ----------------------------------------------------
    SESSION PROGRESS & MILESTONE TRACKER
