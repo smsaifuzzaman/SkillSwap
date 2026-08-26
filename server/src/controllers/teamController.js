@@ -6,11 +6,6 @@ import crypto from "crypto";
 export async function createTeam(req, res) {
   try {
     const { name } = req.body;
-    
-    if (req.user.team) {
-      return res.status(400).json({ message: "You are already in a team." });
-    }
-
     const inviteCode = crypto.randomBytes(4).toString("hex").toUpperCase();
     
     const team = await Team.create({
@@ -21,7 +16,7 @@ export async function createTeam(req, res) {
     });
 
     await User.findByIdAndUpdate(req.user.id, { 
-      team: team._id,
+      $push: { teams: team._id },
       role: "team-admin"
     });
 
@@ -34,23 +29,22 @@ export async function createTeam(req, res) {
 export async function getMyTeam(req, res) {
   try {
     const user = await User.findById(req.user.id);
-    if (!user.team) {
-      return res.status(404).json({ message: "You are not in a team" });
+    if (!user.teams || user.teams.length === 0) {
+      // Return empty array instead of 404
+      return res.json({ teams: [] });
     }
 
-    const team = await Team.findById(user.team).populate("members", "name email profilePhoto role");
-    if (!team) {
-      return res.status(404).json({ message: "Team not found" });
-    }
-
-    // Get recent team sessions
-    const sessions = await Session.find({ teamId: team._id })
+    const teams = await Team.find({ _id: { $in: user.teams } }).populate("members", "name email profilePhoto role");
+    
+    // Get sessions for all teams
+    const teamIds = teams.map(t => t._id);
+    const sessions = await Session.find({ teamId: { $in: teamIds } })
       .populate("owner", "name profilePhoto")
       .populate("participants", "name profilePhoto")
       .sort({ scheduledFor: 1 })
-      .limit(10);
+      .limit(50);
 
-    res.json({ team, sessions });
+    res.json({ teams, sessions });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -60,19 +54,20 @@ export async function joinTeam(req, res) {
   try {
     const { inviteCode } = req.body;
     
-    if (req.user.team) {
-      return res.status(400).json({ message: "You are already in a team." });
-    }
-
     const team = await Team.findOne({ inviteCode: inviteCode.toUpperCase() });
     if (!team) {
       return res.status(404).json({ message: "Invalid invite code" });
     }
 
+    const user = await User.findById(req.user.id);
+    if (user.teams && user.teams.includes(team._id)) {
+      return res.status(400).json({ message: "You are already in this team." });
+    }
+
     team.members.push(req.user.id);
     await team.save();
 
-    await User.findByIdAndUpdate(req.user.id, { team: team._id });
+    await User.findByIdAndUpdate(req.user.id, { $push: { teams: team._id } });
 
     res.json({ message: "Successfully joined team", team });
   } catch (error) {
@@ -82,26 +77,26 @@ export async function joinTeam(req, res) {
 
 export async function removeMember(req, res) {
   try {
-    const { userId } = req.params;
-    const user = await User.findById(req.user.id);
+    const { userId, teamId } = req.params;
     
-    const team = await Team.findById(user.team);
+    const team = await Team.findById(teamId);
     if (!team) {
       return res.status(404).json({ message: "Team not found" });
     }
 
-    if (team.admin.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Only team admins can remove members" });
+    // User is removing themselves or admin is removing someone else
+    if (team.admin.toString() !== req.user.id && req.user.id !== userId) {
+      return res.status(403).json({ message: "Not authorized to remove this member" });
     }
 
     if (team.admin.toString() === userId) {
-      return res.status(400).json({ message: "Admin cannot remove themselves. Transfer ownership first." });
+      return res.status(400).json({ message: "Admin cannot leave. Transfer ownership first." });
     }
 
     team.members = team.members.filter(m => m.toString() !== userId);
     await team.save();
 
-    await User.findByIdAndUpdate(userId, { team: null, role: "learner" });
+    await User.findByIdAndUpdate(userId, { $pull: { teams: team._id } });
 
     res.json({ message: "Member removed successfully" });
   } catch (error) {

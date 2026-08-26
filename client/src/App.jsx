@@ -137,7 +137,7 @@ function App() {
           ) : null}
 
           {view === "dashboard" || (view === "landing" && user) ? (
-            <DashboardPage user={user} />
+            <DashboardPage user={user} setView={setView} />
           ) : null}
 
           {view === "portfolio-showcase" ? (

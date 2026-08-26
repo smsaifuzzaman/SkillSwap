@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { UsersRound, Sparkles } from "lucide-react";
+import { sendMatchRequest } from "../api/matchApi";
 import { getMatches } from "../api/skillApi";
 
 const MatchPage = ({ token, showAlternativeOnly = false }) => {
@@ -65,7 +66,7 @@ const MatchPage = ({ token, showAlternativeOnly = false }) => {
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
               {directMatches.map((user) => (
-                <MatchCard key={user.id} user={user} type="direct" />
+                <MatchCard key={user.id} user={user} type="direct" token={token} />
               ))}
             </div>
           </div>
@@ -93,7 +94,7 @@ const MatchPage = ({ token, showAlternativeOnly = false }) => {
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
               {partialMatches.map((user) => (
-                <MatchCard key={user.id} user={user} type="partial" />
+                <MatchCard key={user.id} user={user} type="partial" token={token} />
               ))}
             </div>
           </div>
@@ -111,7 +112,7 @@ const MatchPage = ({ token, showAlternativeOnly = false }) => {
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
               {exploreMatches.map((user) => (
-                <MatchCard key={user.id} user={user} type="explore" />
+                <MatchCard key={user.id} user={user} type="explore" token={token} />
               ))}
             </div>
           </div>
@@ -132,14 +133,27 @@ const MatchPage = ({ token, showAlternativeOnly = false }) => {
 };
 
 // Helper component for displaying a user card
-function MatchCard({ user, type }) {
+function MatchCard({ user, type, token }) {
   const backendUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
+  const [status, setStatus] = useState("idle"); // idle, loading, sent, error
+  const [errorMsg, setErrorMsg] = useState("");
   
-  // Some users might have teachingSkills stored directly or just an array of objects
   const getSkillNames = (skills) => {
     if (!skills || !Array.isArray(skills)) return "None specified";
     if (skills.length === 0) return "None specified";
     return skills.map(s => s.skillName || s).join(", ");
+  };
+
+  const handleConnect = async () => {
+    try {
+      setStatus("loading");
+      await sendMatchRequest(token, user.id || user._id);
+      setStatus("sent");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      setErrorMsg(err.message || "Failed to send request");
+    }
   };
 
   return (
@@ -208,8 +222,21 @@ function MatchCard({ user, type }) {
         )}
       </div>
       
-      <button className="primary-button" style={{ marginTop: "auto" }}>
-        Connect
+      {status === "error" && (
+        <p style={{ color: "var(--coral)", fontSize: "0.85rem", margin: "0" }}>{errorMsg}</p>
+      )}
+      
+      <button 
+        className="primary-button" 
+        style={{ 
+          marginTop: "auto", 
+          opacity: status === "sent" ? 0.7 : 1,
+          cursor: status === "sent" || status === "loading" ? "not-allowed" : "pointer" 
+        }}
+        onClick={handleConnect}
+        disabled={status === "sent" || status === "loading"}
+      >
+        {status === "loading" ? "Sending..." : status === "sent" ? "Request Sent" : "Connect"}
       </button>
     </div>
   );

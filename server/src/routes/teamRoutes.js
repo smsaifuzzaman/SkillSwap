@@ -14,6 +14,6 @@ router.use(protect);
 router.post("/", createTeam);
 router.get("/my-team", getMyTeam);
 router.post("/join", joinTeam);
-router.delete("/members/:userId", removeMember);
+router.delete("/:teamId/members/:userId", removeMember);
 
 export default router;

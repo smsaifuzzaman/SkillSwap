@@ -7,6 +7,13 @@ import {
   upsertSessionCalendarEvent
 } from "../services/googleCalendarService.js";
 import mongoose from "mongoose";
+import { google } from "googleapis";
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI || "http://localhost:5001/api/sessions/auth/google/callback"
+);
 
 function getIdString(value) {
   return value?._id?.toString() || value?.toString() || "";
@@ -160,6 +167,15 @@ export async function createSession(req, res) {
       .populate("owner", "name email")
       .populate("partnerId", "name email");
 
+    
+    const ownerUser = await User.findById(req.user.id);
+    const partnerUser = session.partnerId ? await User.findById(session.partnerId) : null;
+    
+    // Attempt to create Google Calendar Event
+    if (ownerUser && ownerUser.googleTokens) {
+      await createGoogleCalendarEvent(session, ownerUser, partnerUser?.email);
+    }
+    
     if (session.partnerId) {
       await createNotification(
         session.partnerId,
@@ -490,7 +506,7 @@ export async function joinGroupSession(req, res) {
 
     // Check if team member
     const user = await User.findById(req.user.id);
-    if (session.teamId && String(session.teamId) !== String(user.team)) {
+    if (session.teamId && (!user.teams || !user.teams.some(tId => String(tId) === String(session.teamId)))) {
       return res.status(403).json({ message: "You must be in the team to join this group swap." });
     }
 
@@ -508,5 +524,54 @@ export async function joinGroupSession(req, res) {
     res.json({ message: "Successfully joined the group session!", session });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+}
+
+export function getGoogleAuthUrl(req, res) {
+  const url = oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    scope: ["https://www.googleapis.com/auth/calendar.events"],
+    state: req.user.id
+  });
+  res.json({ url });
+}
+
+export async function googleAuthCallback(req, res) {
+  try {
+    const { code, state: userId } = req.query;
+    const { tokens } = await oauth2Client.getToken(code);
+    await User.findByIdAndUpdate(userId, { googleTokens: tokens });
+    res.send("Google Calendar linked successfully! You can close this window.");
+  } catch (error) {
+    res.status(500).send("Error linking Google Calendar: " + error.message);
+  }
+}
+
+async function createGoogleCalendarEvent(session, owner, partnerEmail) {
+  if (!owner.googleTokens) return;
+  oauth2Client.setCredentials(owner.googleTokens);
+  const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+  
+  const start = new Date(session.scheduledFor);
+  const end = new Date(start.getTime() + (session.durationMinutes || 60) * 60000);
+  
+  const event = {
+    summary: `SkillSwap: ${session.skillName}`,
+    description: `SkillSwap session.
+Notes: ${session.notes || ""}`,
+    start: { dateTime: start.toISOString() },
+    end: { dateTime: end.toISOString() },
+    location: session.meetingLink || session.location || "",
+    attendees: partnerEmail ? [{ email: partnerEmail }] : []
+  };
+
+  try {
+    await calendar.events.insert({
+      calendarId: "primary",
+      resource: event,
+      sendUpdates: "all"
+    });
+  } catch (error) {
+    console.error("Google Calendar Insert Error:", error);
   }
 }

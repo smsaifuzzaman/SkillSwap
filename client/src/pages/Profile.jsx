@@ -64,7 +64,16 @@ const Profile = ({ token }) => {
   async function handleSave(e) {
     e.preventDefault();
     try {
-      await updateProfile(token, profile);
+      let finalProfile = { ...profile };
+      
+      // If there is un-added text in the input, add it automatically before saving
+      if (desiredSkill.trim()) {
+        finalProfile.desiredSkills = [...(profile.desiredSkills || []), desiredSkill.trim()];
+        setProfile(finalProfile);
+        setDesiredSkill("");
+      }
+      
+      await updateProfile(token, finalProfile);
       alert("Profile Updated Successfully!");
       setEditing(false);
     } catch (err) {
@@ -139,6 +148,7 @@ const Profile = ({ token }) => {
                   label="Name"
                   value={profile.name}
                   onChange={(val) => handleChange("name", val)}
+                  required
                 />
               ) : (
                 <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.6rem" }}>{profile.name}</h2>
@@ -215,7 +225,7 @@ const Profile = ({ token }) => {
 
           {editing && (
             <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", alignItems: "flex-end" }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddDesiredSkill(); } }}>
                 <Field
                   label="Add an interest"
                   placeholder="e.g. Machine Learning"

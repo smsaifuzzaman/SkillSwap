@@ -38,11 +38,10 @@ const userSchema = new mongoose.Schema(
       default: "Free"
     },
 
-    team: {
+    teams: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Team",
-      default: null
-    },
+      ref: "Team"
+    }],
 
     // Existing fields
     skillLevel: {

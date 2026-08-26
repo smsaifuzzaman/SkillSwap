@@ -44,10 +44,12 @@ export async function joinTeam(token, inviteCode) {
   return res.json();
 }
 
-export async function removeMember(token, userId) {
-  const res = await fetch(`${API_URL}/members/${userId}`, {
+export async function removeMember(token, teamId, userId) {
+  const res = await fetch(`${API_URL}/${teamId}/members/${userId}`, {
     method: "DELETE",
-    headers: getAuthHeaders(token),
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

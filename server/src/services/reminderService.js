@@ -1,11 +1,15 @@
 import cron from "node-cron";
+import sgMail from "@sendgrid/mail";
 import { Session } from "../models/Session.js";
 import { Notification } from "../models/Notification.js";
 import { User } from "../models/User.js";
 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 // Helper to create a notification easily
 export async function createNotification(recipientId, type, title, message, relatedEntityId = null) {
   try {
+    // 1. Create DB notification
     await Notification.create({
       recipient: recipientId,
       type,
@@ -13,8 +17,23 @@ export async function createNotification(recipientId, type, title, message, rela
       message,
       relatedEntityId,
     });
+
+    // 2. Send email via SendGrid
+    if (process.env.SENDGRID_API_KEY) {
+      const user = await User.findById(recipientId);
+      if (user && user.email) {
+        const msg = {
+          to: user.email,
+          from: 'notifications@skillswap.com', // Must be verified in SendGrid
+          subject: title,
+          text: message,
+          html: `<p>Hi ${user.name},</p><p>${message}</p>`,
+        };
+        await sgMail.send(msg);
+      }
+    }
   } catch (err) {
-    console.error("Error creating notification:", err);
+    console.error("Error creating/sending notification:", err);
   }
 }
 

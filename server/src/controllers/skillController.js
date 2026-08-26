@@ -1,6 +1,9 @@
 import { Skill } from "../models/Skill.js";
 import { User } from "../models/User.js";
 import { expirePastBoosts } from "../utils/boostUtils.js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ----------------------------------------------------
 // PROFICIENCY RANK
@@ -487,240 +490,143 @@ export const getMatches = async (
 // SKILL-BASED AI MATCHING
 // ----------------------------------------------------
 
-export const getSkillMatches = async (
-  req,
-  res
-) => {
+export const getSkillMatches = async (req, res) => {
   try {
-    // ---------------------------------------------
-    // FEATURE 1:
-    // Make sure expired boosts do not receive
-    // Featured priority in AI matching.
-    // ---------------------------------------------
-
     await expirePastBoosts();
 
-    const mySkills =
-      await Skill.find({
-        owner: req.user.id
+    const mySkills = await Skill.find({ owner: req.user.id });
+    const learningSkills = mySkills.filter((skill) => skill.type === "learn");
+
+    if (learningSkills.length === 0) {
+      return res.json({ matches: [], message: "Add at least one skill you want to learn to get matches." });
+    }
+
+    const possibleTeachers = await Skill.find({
+      owner: { $ne: req.user.id },
+      type: "teach"
+    }).populate("owner", "name email location availability preferredFormat rating totalSwaps");
+
+    const now = new Date();
+    const candidatePairs = [];
+
+    // Filter candidate pairs by basic name match to save tokens
+    learningSkills.forEach((learningSkill) => {
+      possibleTeachers.forEach((teachingSkill) => {
+        if (cleanSkillName(learningSkill.skillName) === cleanSkillName(teachingSkill.skillName)) {
+          candidatePairs.push({ learningSkill, teachingSkill });
+        }
       });
+    });
 
-    const learningSkills =
-      mySkills.filter(
-        (skill) =>
-          skill.type === "learn"
-      );
+    if (candidatePairs.length === 0) {
+      return res.json({ matches: [], totalLearningSkills: learningSkills.length });
+    }
 
-    if (
-      learningSkills.length === 0
-    ) {
-      return res.json({
-        matches: [],
+    // Prepare prompt for Gemini
+    const pairsData = candidatePairs.map((pair, index) => ({
+      pairIndex: index,
+      learner: {
+        skill: pair.learningSkill.skillName,
+        proficiency: pair.learningSkill.proficiency,
+        format: pair.learningSkill.preferredFormat,
+        duration: pair.learningSkill.sessionDuration,
+        desc: pair.learningSkill.description,
+        availability: req.user.availability || "Anytime"
+      },
+      teacher: {
+        skill: pair.teachingSkill.skillName,
+        proficiency: pair.teachingSkill.proficiency,
+        format: pair.teachingSkill.preferredFormat,
+        duration: pair.teachingSkill.sessionDuration,
+        desc: pair.teachingSkill.description,
+        availability: pair.teachingSkill.owner?.availability || "Anytime"
+      }
+    }));
 
-        message:
-          "Add at least one skill you want to learn to get matches."
+    const prompt = `
+      Analyze the following pairs of learners and teachers for skill swapping.
+      For each pair, calculate a match score from 0 to 100 based on how well their proficiency levels, preferred formats, session durations, descriptions, and availabilities align.
+      Also provide 1-3 concise reasons for the score.
+      Respond ONLY with a valid JSON array of objects, where each object has:
+      - pairIndex (number)
+      - score (number)
+      - reasons (array of strings)
+
+      Pairs data:
+      ${JSON.stringify(pairsData, null, 2)}
+    `;
+
+    let aiResults = [];
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const result = await model.generateContent(prompt);
+      let responseText = result.response.text();
+      // Clean markdown formatting if present
+      responseText = responseText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '');
+      aiResults = JSON.parse(responseText);
+    } catch (aiError) {
+      console.error("Gemini AI error, falling back to rule-based:", aiError);
+      // Fallback to rule-based if AI fails
+      aiResults = candidatePairs.map((pair, index) => {
+        const match = buildMatchScore(pair.learningSkill, pair.teachingSkill, req.user);
+        return { pairIndex: index, score: match.score, reasons: match.reasons };
       });
     }
 
-    const possibleTeachers =
-      await Skill.find({
-        owner: {
-          $ne: req.user.id
-        },
-
-        type: "teach"
-      }).populate(
-        "owner",
-        "name email location availability preferredFormat rating totalSwaps"
-      );
-
     const matches = [];
 
-    const now = new Date();
+    candidatePairs.forEach((pair, index) => {
+      const aiResult = aiResults.find(r => r.pairIndex === index);
+      if (!aiResult || aiResult.score < 55) return;
 
-    learningSkills.forEach(
-      (learningSkill) => {
-        possibleTeachers.forEach(
-          (teachingSkill) => {
-            if (
-              cleanSkillName(
-                learningSkill.skillName
-              ) !==
-              cleanSkillName(
-                teachingSkill.skillName
-              )
-            ) {
-              return;
-            }
+      const isFeatured = pair.teachingSkill.boost?.status === "active" &&
+                         pair.teachingSkill.boost?.expiresAt &&
+                         new Date(pair.teachingSkill.boost.expiresAt) > now;
 
-            const match =
-              buildMatchScore(
-                learningSkill,
-                teachingSkill,
-                req.user
-              );
-
-            if (
-              match.score < 55
-            ) {
-              return;
-            }
-
-            // --------------------------------------
-            // FEATURE 1:
-            // Determine whether this teaching skill
-            // is currently Featured.
-            // --------------------------------------
-
-            const isFeatured =
-              teachingSkill.boost
-                ?.status ===
-                "active" &&
-              teachingSkill.boost
-                ?.expiresAt &&
-              new Date(
-                teachingSkill.boost.expiresAt
-              ) > now;
-
-            matches.push({
-              id: `${learningSkill._id}-${teachingSkill._id}`,
-
-              score:
-                match.score,
-
-              reasons:
-                match.reasons,
-
-              isFeatured:
-                Boolean(
-                  isFeatured
-                ),
-
-              learningSkill: {
-                id:
-                  learningSkill._id,
-
-                skillName:
-                  learningSkill.skillName,
-
-                proficiency:
-                  learningSkill.proficiency,
-
-                preferredFormat:
-                  learningSkill.preferredFormat,
-
-                sessionDuration:
-                  learningSkill.sessionDuration,
-
-                description:
-                  learningSkill.description
-              },
-
-              teacherSkill: {
-                id:
-                  teachingSkill._id,
-
-                skillName:
-                  teachingSkill.skillName,
-
-                proficiency:
-                  teachingSkill.proficiency,
-
-                preferredFormat:
-                  teachingSkill.preferredFormat,
-
-                sessionDuration:
-                  teachingSkill.sessionDuration,
-
-                description:
-                  teachingSkill.description
-              },
-
-              teacher: {
-                id:
-                  teachingSkill.owner
-                    ?._id,
-
-                name:
-                  teachingSkill.owner
-                    ?.name ||
-                  "SkillSwap member",
-
-                email:
-                  teachingSkill.owner
-                    ?.email ||
-                  "",
-
-                location:
-                  teachingSkill.owner
-                    ?.location ||
-                  "",
-
-                availability:
-                  teachingSkill.owner
-                    ?.availability ||
-                  "Anytime",
-
-                preferredFormat:
-                  teachingSkill.owner
-                    ?.preferredFormat ||
-                  teachingSkill.preferredFormat,
-
-                rating:
-                  teachingSkill.owner
-                    ?.rating ||
-                  0,
-
-                totalSwaps:
-                  teachingSkill.owner
-                    ?.totalSwaps ||
-                  0
-              }
-            });
-          }
-        );
-      }
-    );
-
-    // ---------------------------------------------
-    // FEATURE 1:
-    // Featured listings appear first.
-    // Inside each group, higher AI score wins.
-    // ---------------------------------------------
-
-    matches.sort(
-      (first, second) => {
-        if (
-          first.isFeatured !==
-          second.isFeatured
-        ) {
-          return (
-            Number(
-              second.isFeatured
-            ) -
-            Number(
-              first.isFeatured
-            )
-          );
+      matches.push({
+        id: `${pair.learningSkill._id}-${pair.teachingSkill._id}`,
+        score: aiResult.score,
+        reasons: aiResult.reasons,
+        isFeatured: Boolean(isFeatured),
+        learningSkill: {
+          id: pair.learningSkill._id,
+          skillName: pair.learningSkill.skillName,
+          proficiency: pair.learningSkill.proficiency,
+          preferredFormat: pair.learningSkill.preferredFormat,
+          sessionDuration: pair.learningSkill.sessionDuration,
+          description: pair.learningSkill.description
+        },
+        teacherSkill: {
+          id: pair.teachingSkill._id,
+          skillName: pair.teachingSkill.skillName,
+          proficiency: pair.teachingSkill.proficiency,
+          preferredFormat: pair.teachingSkill.preferredFormat,
+          sessionDuration: pair.teachingSkill.sessionDuration,
+          description: pair.teachingSkill.description
+        },
+        teacher: {
+          id: pair.teachingSkill.owner?._id,
+          name: pair.teachingSkill.owner?.name || "SkillSwap member",
+          email: pair.teachingSkill.owner?.email || "",
+          location: pair.teachingSkill.owner?.location || "",
+          availability: pair.teachingSkill.owner?.availability || "Anytime",
+          preferredFormat: pair.teachingSkill.owner?.preferredFormat || pair.teachingSkill.preferredFormat,
+          rating: pair.teachingSkill.owner?.rating || 0,
+          totalSwaps: pair.teachingSkill.owner?.totalSwaps || 0
         }
+      });
+    });
 
-        return (
-          second.score -
-          first.score
-        );
+    matches.sort((first, second) => {
+      if (first.isFeatured !== second.isFeatured) {
+        return Number(second.isFeatured) - Number(first.isFeatured);
       }
-    );
-
-    return res.json({
-      matches,
-
-      totalLearningSkills:
-        learningSkills.length
+      return second.score - first.score;
     });
+
+    return res.json({ matches, totalLearningSkills: learningSkills.length });
   } catch (err) {
-    return res.status(500).json({
-      message: err.message
-    });
+    return res.status(500).json({ message: err.message });
   }
 };
 
