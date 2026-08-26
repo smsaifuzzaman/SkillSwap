@@ -11,6 +11,7 @@ import {
 
 import React, { useEffect, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
+import { searchLearningBooks } from "../api/externalResourceApi.js";
 
 import {
   deleteVaultResource,
@@ -68,6 +69,12 @@ function ResourceVaultPage({ token }) {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const [bookQuery, setBookQuery] = useState("");
+  const [bookResults, setBookResults] = useState([]);
+  const [bookLoading, setBookLoading] = useState(false);
+  const [bookError, setBookError] = useState("");
+  const [visibleBookCount, setVisibleBookCount] = useState(5);
 
   useEffect(() => {
     async function loadResources() {
@@ -277,6 +284,35 @@ function handleExportPortfolioPdf() {
     "Portfolio PDF exported successfully."
   );
  }
+
+  async function handleBookSearch(event) {
+    event.preventDefault();
+
+    if (!bookQuery.trim()) {
+      setBookError("Enter a topic to search.");
+      setBookResults([]);
+      return;
+    }
+
+    try {
+      setBookLoading(true);
+      setBookError("");
+      setVisibleBookCount(5);
+
+      const results = await searchLearningBooks(bookQuery);
+
+      setBookResults(results);
+
+      if (results.length === 0) {
+        setBookError("No learning books found.");
+      }
+    } catch (error) {
+      setBookError(error.message || "Could not search learning resources.");
+    } finally {
+      setBookLoading(false);
+    }
+  }
+
   return (
     <section className="portfolio-page vault-page">
       <div className="portfolio-header">
@@ -574,8 +610,111 @@ function handleExportPortfolioPdf() {
           </div>
         </section>
       </div>
+
+      <section className="external-resource-section">
+        <div className="feed-heading">
+          <div>
+            <p className="eyebrow">Learning Resources</p>
+            <h2>Find Learning Books</h2>
+          </div>
+        </div>
+
+        <p className="external-resource-copy">
+          Search for books and learning resources related to any skill or topic.
+        </p>
+
+        <form
+          className="external-resource-search"
+          onSubmit={handleBookSearch}
+        >
+          <input
+            type="text"
+            value={bookQuery}
+            placeholder="Search UX Design, React, Java..."
+            onChange={(event) => {
+              const value = event.target.value;
+
+              setBookQuery(value);
+
+               if (!value.trim()) {
+                 setBookResults([]);
+                 setBookError("");
+                 setVisibleBookCount(5);
+               }
+             }}
+          />
+
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={bookLoading}
+          >
+            {bookLoading ? "Searching..." : "Search Books"}
+          </button>
+        </form>
+
+        {bookError ? (
+          <p className="form-error">
+            {bookError}
+          </p>
+        ) : null}
+
+        {bookResults.length > 0 ? (
+          <>
+           <div className="external-resource-results">
+             {bookResults
+               .slice(0, visibleBookCount)
+               .map((book) => (
+                 <article
+                   className="external-resource-card"
+                   key={`${book.key}-${book.title}`}
+                 >
+                  <div>
+                    <span className="match-label">BOOK</span>
+
+                    <h3>{book.title}</h3>
+
+                    <p>{book.author}</p>
+
+                    <small>
+                      First published: {book.year}
+                    </small>
+                  </div>
+
+                  <a
+                    className="ghost-button"
+                    href={book.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View Resource
+                  </a>
+                </article>
+              ))}
+          </div>
+
+          {visibleBookCount < bookResults.length ? (
+            <button
+              className="ghost-button external-show-more"
+              type="button"
+              onClick={() =>
+                setVisibleBookCount((current) =>
+                  Math.min(
+                    current + 5,
+                    bookResults.length
+                  )
+                )
+              }
+          >
+              Show More
+            </button>
+          ) : null}
+        </>
+      ) : null}
     </section>
-  );
+
+   </section>
+ );
 }
 
 export default ResourceVaultPage;
