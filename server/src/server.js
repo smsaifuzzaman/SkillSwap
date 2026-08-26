@@ -24,7 +24,7 @@ app.set("io", io);
 
 connectDB()
   .then(() => {
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`SkillSwap API running on http://localhost:${port}`);
       startReminderService();
     });
