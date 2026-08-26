@@ -65,14 +65,6 @@ function SideNav({ view, setView }) {
       </button>
 
       <button
-        className={`side-nav-item ${view === "trust-reviews" ? "active" : ""}`}
-        type="button"
-        onClick={() => setView("trust-reviews")}
-      >
-        <Star size={19} />
-        Trust & Reviews
-      </button>
-      <button
         className={`side-nav-item ${view === "team" ? "active" : ""}`}
         type="button"
         onClick={() => setView("team")}

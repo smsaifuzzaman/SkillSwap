@@ -1,5 +1,6 @@
 import { Session } from "../models/Session.js";
 import { User } from "../models/User.js";
+import { Team } from "../models/Team.js";
 import { Review } from "../models/Review.js";
 import { createNotification } from "../services/reminderService.js";
 import {
@@ -184,6 +185,21 @@ export async function createSession(req, res) {
         `${req.user.name || "Someone"} has requested a ${req.body.skillName} session with you.`,
         session._id
       );
+    } else if (session.isGroup && session.teamId) {
+      const team = await Team.findById(session.teamId);
+      if (team && team.members) {
+        for (const memberId of team.members) {
+          if (String(memberId) !== String(req.user.id)) {
+            await createNotification(
+              memberId,
+              "team",
+              "New Group Meeting",
+              `${req.user.name || "A team admin"} scheduled a new group meeting: ${req.body.skillName}.`,
+              session._id
+            );
+          }
+        }
+      }
     }
 
     if (isGoogleCalendarConfigured()) {

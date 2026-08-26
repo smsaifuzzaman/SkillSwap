@@ -15,7 +15,7 @@ export default function TeamWorkspacePage({ user, token, setView }) {
   const [inviteCode, setInviteCode] = useState("");
   const [showForms, setShowForms] = useState(false);
   
-  // Group Swap Form State
+  // Group Meeting Form State
   const [showGroupSwapForm, setShowGroupSwapForm] = useState(false);
   const [groupSkillName, setGroupSkillName] = useState("");
   const [groupDate, setGroupDate] = useState("");
@@ -231,13 +231,13 @@ export default function TeamWorkspacePage({ user, token, setView }) {
                 </ul>
               </div>
 
-              {/* Group Swaps Area */}
+              {/* Group Meetings Area */}
               <div className="team-activity">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-                  <h3 style={{ margin: 0 }}>Group Swaps</h3>
+                  <h3 style={{ margin: 0 }}>Group Meetings</h3>
                   {activeTeam.admin === user.id && (
                     <button className="primary-button small" onClick={() => setShowGroupSwapForm(!showGroupSwapForm)}>
-                      <PlusCircle size={16} /> {showGroupSwapForm ? "Cancel" : "New Group Swap"}
+                      <PlusCircle size={16} /> {showGroupSwapForm ? "Cancel" : "New Group Meeting"}
                     </button>
                   )}
                 </div>
@@ -252,7 +252,7 @@ export default function TeamWorkspacePage({ user, token, setView }) {
                       <label>Date & Time</label>
                       <input type="datetime-local" value={groupDate} onChange={e => setGroupDate(e.target.value)} required />
                     </div>
-                    <button type="submit" className="primary-button">Schedule Group Swap</button>
+                    <button type="submit" className="primary-button">Schedule Group Meeting</button>
                   </form>
                 )}
 
