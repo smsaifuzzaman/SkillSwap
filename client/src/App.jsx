@@ -27,6 +27,10 @@ import PublicProfilePage from "./pages/PublicProfilePage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import InboxPage from "./pages/InboxPage.jsx";
 
+import SwapPage from "./pages/SwapPage.jsx";
+import DisputePage from "./pages/DisputePage.jsx";
+import AnalyticsPage from "./pages/AnalyticsPage.jsx";
+
 import SignupPage from "./pages/SignupPage.jsx";
 import { parseError } from "./utils/errors.js";
 
@@ -197,6 +201,19 @@ function App() {
             <InboxPage user={user} token={token} setView={setView} setSelectedUserId={setSelectedUserId} />
           ) : null}
 
+          
+          {view === "swap-negotiation" ? (
+            <SwapPage user={user} token={token} selectedUserId={selectedUserId} setView={setView} />
+          ) : null}
+
+          {view === "dispute-resolution" ? (
+            <DisputePage user={user} token={token} selectedUserId={selectedUserId} setView={setView} />
+          ) : null}
+
+          {view === "skill-analytics" ? (
+            <AnalyticsPage user={user} token={token} />
+          ) : null}
+
           {view === "profile" ? (
             <Profile user={user} token={token} />
           ) : null}
@@ -230,7 +247,10 @@ function App() {
               "my-skills",
               "add-skill",
               "featured-skills",
-              "alternative-skills"
+              "alternative-skills",
+              "swap-negotiation",
+              "dispute-resolution",
+              "skill-analytics"
             ].includes(view) ? (
               <FeaturePage feature={selectedFeature} />
             ) : null}
